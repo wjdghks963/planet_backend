@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class PlantDTO {
 
-    private Integer userId;
+    private Long userId;
     private String nickName;
     private String scientificName;
     private String imgUrl;

@@ -17,7 +17,6 @@ public class PlantController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlantController.class);
 
-
     private final PlantService plantService;
 
     @PostMapping("/add")
