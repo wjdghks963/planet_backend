@@ -1,6 +1,6 @@
 package com.jung.planet.plant.entity;
 
-import com.jung.planet.model.Diary;
+import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.user.entity.User;
 import com.jung.planet.model.UserPlantHeart;
 import jakarta.persistence.*;
@@ -16,9 +16,10 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "plant")
 public class Plant {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
