@@ -1,16 +1,23 @@
-package com.jung.planet.model;
+package com.jung.planet.diary.entity;
 
+import com.jung.planet.plant.entity.Plant;
 import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 
 @Entity
+@Getter
+@NoArgsConstructor
 @Table(name = "diary")
 public class Diary {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "plant_id", nullable = false)
@@ -22,8 +29,8 @@ public class Diary {
     @Column(nullable = false)
     private Boolean isPublic;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "img_url")
+    private String imgUrl;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -31,4 +38,14 @@ public class Diary {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+
+    @Builder
+    public Diary(Plant plant, String title, Boolean isPublic, String imgUrl, String content) {
+        this.plant = plant;
+        this.title = title;
+        this.isPublic = isPublic;
+        this.imgUrl = imgUrl;
+        this.content = content;
+        this.createdAt = LocalDateTime.now();
+    }
 }
