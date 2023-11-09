@@ -2,7 +2,6 @@ package com.jung.planet.plant.entity;
 
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.user.entity.User;
-import com.jung.planet.model.UserPlantHeart;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,6 +35,9 @@ public class Plant {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "heart_count", nullable = false)
+    private Integer heartCount = 0;
 
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Diary> diaries;
