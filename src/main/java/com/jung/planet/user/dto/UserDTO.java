@@ -6,16 +6,10 @@ import lombok.Getter;
 
 @Getter
 public class UserDTO {
-    private final String email;
-    private final String name;
+    private  String email;
+    private  String name;
+    private  String imgUrl;
 
-    // 기본 생성자, getter 생략
-
-    @Builder
-    public UserDTO(String email, String name) {
-        this.email = email;
-        this.name = name;
-    }
 
     public User toEntity() {
         return User.builder()
