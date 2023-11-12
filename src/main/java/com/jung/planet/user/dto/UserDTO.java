@@ -1,21 +1,16 @@
 package com.jung.planet.user.dto;
 
 import com.jung.planet.user.entity.User;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class UserDTO {
-    private final String email;
-    private final String name;
+    private  String email;
+    private  String name;
+    private  String imgUrl;
 
-    // 기본 생성자, getter 생략
-
-    @Builder
-    public UserDTO(String email, String name) {
-        this.email = email;
-        this.name = name;
-    }
 
     public User toEntity() {
         return User.builder()
