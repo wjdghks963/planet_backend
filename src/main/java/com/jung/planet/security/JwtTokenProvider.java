@@ -30,7 +30,9 @@ public class JwtTokenProvider {
     private final Key key;
 
 
-    private long validityInMilliseconds = 3600000; // 1h
+    private final long validityInMilliseconds = 1000 * 60 * 60 * 12; // 12h
+
+    private final long refreshTokenValidityInMilliseconds = 604800000;
 
     @Autowired
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
@@ -44,13 +46,29 @@ public class JwtTokenProvider {
     }
 
 
-    public String createToken(Long userId, String email) {
+    public String createAccessToken(Long userId, String email) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", userId);
         //claims.put("auth", new SimpleGrantedAuthority("ROLE_USER"));
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+
+    public String createRefreshToken(Long userId, String email) {
+        Claims claims = Jwts.claims().setSubject(email);
+        claims.put("userId", userId);
+
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
                 .setClaims(claims)

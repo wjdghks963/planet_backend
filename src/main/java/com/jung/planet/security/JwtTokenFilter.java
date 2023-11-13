@@ -27,21 +27,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         try {
             String token = resolveToken(request);
-            if (token == null) {
-                throw new CustomJwtException("Missing token");
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                Authentication auth = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
-            if (!jwtTokenProvider.validateToken(token)) {
-                throw new CustomJwtException("Invalid token");
-            }
-
-            Authentication auth = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(auth);
-            filterChain.doFilter(request, response);
         } catch (CustomJwtException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
         }
+
+        filterChain.doFilter(request, response);
+
     }
 
 

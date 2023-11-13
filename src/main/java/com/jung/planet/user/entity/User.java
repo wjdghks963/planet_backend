@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity
 @Getter
@@ -28,11 +29,17 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "refresh_token")
+    private String refreshToken;
 
-    @Builder
-    public User(String email, String name) {
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+    @Builder(toBuilder = true)
+    public User(String email, String name, String refreshToken) {
         this.email = email;
         this.name = name;
+        this.refreshToken = (refreshToken != null) ? refreshToken : "";
         this.createdAt = LocalDateTime.now();
     }
 }

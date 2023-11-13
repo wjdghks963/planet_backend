@@ -1,5 +1,6 @@
 package com.jung.planet.user.service;
 
+import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.user.dto.UserDTO;
 import com.jung.planet.user.entity.User;
 import com.jung.planet.user.repository.UserRepository;
@@ -13,6 +14,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
 
     @Transactional
@@ -23,12 +25,30 @@ public class UserService {
         // 사용자가 존재하지 않으면 새로운 사용자를 생성
         if (user.isEmpty()) {
             User newUser = User.builder().email(userDTO.getEmail()).name(userDTO.getName()).build();
+            String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail());
+            newUser.setRefreshToken(refreshToken);
 
             userRepository.save(newUser);
             return newUser;
         } else {
-            return user.get();
+            User existedUer = user.get();
+            String refreshToken = jwtTokenProvider.createRefreshToken(existedUer.getId(), existedUer.getEmail());
+            existedUer.setRefreshToken(refreshToken);
+            return existedUer;
         }
     }
 
+
+    @Transactional
+    public void updateRefreshToken(Long userId, String refreshToken) {
+        Optional<User> user = userRepository.findById(userId);
+        user.ifPresent(u -> {
+             u.setRefreshToken(refreshToken);
+            userRepository.save(u);
+        });
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 }
