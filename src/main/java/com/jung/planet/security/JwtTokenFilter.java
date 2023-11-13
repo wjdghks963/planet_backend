@@ -1,6 +1,7 @@
 package com.jung.planet.security;
 
 
+import com.jung.planet.exception.CustomJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,14 +25,25 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = resolveToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        try {
+            String token = resolveToken(request);
+            if (token == null) {
+                throw new CustomJwtException("Missing token");
+            }
+            if (!jwtTokenProvider.validateToken(token)) {
+                throw new CustomJwtException("Invalid token");
+            }
+
             Authentication auth = jwtTokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(auth);
+            filterChain.doFilter(request, response);
+        } catch (CustomJwtException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
         }
-
-        filterChain.doFilter(request, response);
     }
+
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

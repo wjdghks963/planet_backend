@@ -1,6 +1,5 @@
 package com.jung.planet.security;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +21,6 @@ public class SecurityConfig {
     }
 
 
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -32,7 +30,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 인증 요구 사항 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/login").permitAll().anyRequest().authenticated()
+                        .requestMatchers("/users/login", "/diary/{id}").permitAll()
+                        .anyRequest().authenticated()
                 )
                 // JWT 필터 추가
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
