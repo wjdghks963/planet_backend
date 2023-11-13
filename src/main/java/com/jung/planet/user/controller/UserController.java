@@ -29,7 +29,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> getCurrentUser(@RequestBody UserDTO userDTO) {
         User user = userService.processUser(userDTO);
-        String jwt = jwtTokenProvider.createToken(user.getEmail());
+        String jwt = jwtTokenProvider.createToken(user.getId(),user.getEmail());
 
         return ResponseEntity.ok(new JwtResponse(jwt, user));
     }
