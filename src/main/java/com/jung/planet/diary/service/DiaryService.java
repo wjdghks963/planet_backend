@@ -7,8 +7,11 @@ import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 
 @Service
@@ -33,14 +36,20 @@ public class DiaryService {
     }
 
     @Transactional
-    public void deleteDiary(Long diaryId) {
+    public void deleteDiary(Long diaryId, Long userId) {
         if (diaryRepository.existsById(diaryId)) {
-            diaryRepository.deleteById(diaryId);
+            Optional<Diary> diary = diaryRepository.findByIdAndUserId(diaryId, userId);
+
+            if (diary.isPresent()) {
+                diaryRepository.deleteById(diary.get().getId());
+            } else {
+                // 소유자가 아닌 경우 예외 발생
+                throw new AccessDeniedException("No access rights to delete diary with ID " + diaryId);
+            }
         } else {
             throw new EntityNotFoundException("Diary with ID " + diaryId + " not found");
         }
     }
-
 
 
 }

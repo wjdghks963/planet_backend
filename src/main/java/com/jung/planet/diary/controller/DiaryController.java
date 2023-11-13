@@ -4,11 +4,13 @@ import com.jung.planet.diary.dto.DiaryDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.diary.service.DiaryService;
 import com.jung.planet.plant.controller.PlantController;
+import com.jung.planet.security.UserDetail.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -41,10 +43,11 @@ public class DiaryController {
     }
 
     @DeleteMapping("/remove/{id}")
-    public ResponseEntity<Map<String, Object>> removeDiary(@PathVariable("id") Long diaryId) {
-        diaryService.deleteDiary(diaryId);
-        return ResponseEntity.ok(Map.of("ok", true));
+    public ResponseEntity<?> removeDiary(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("id") Long diaryId) {
+            diaryService.deleteDiary(diaryId, user.getUserId());
+            return ResponseEntity.ok(Map.of("ok", true));
     }
+
 
 
 }
