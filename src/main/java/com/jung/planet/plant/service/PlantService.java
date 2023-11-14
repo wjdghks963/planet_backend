@@ -43,7 +43,6 @@ public class PlantService {
     private PlantSummaryDTO convertToDto(Plant plant) {
         PlantSummaryDTO dto = new PlantSummaryDTO();
         dto.setNickName(plant.getNickName());
-        dto.setScientificName(plant.getScientificName());
         dto.setHeartCount(plant.getHeartCount());
         dto.setImgUrl(plant.getImgUrl());
         dto.setPeriod(calculatePeriod(plant.getCreatedAt()));

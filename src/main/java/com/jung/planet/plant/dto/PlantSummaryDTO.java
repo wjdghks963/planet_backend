@@ -9,7 +9,6 @@ import lombok.Setter;
 @Getter
 public class PlantSummaryDTO {
     private String nickName;
-    private String scientificName;
     private String imgUrl;
     private int period;
     private int heartCount;
