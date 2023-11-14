@@ -1,5 +1,6 @@
 package com.jung.planet.plant.controller;
 
+import com.jung.planet.plant.dto.PlantDetailDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.entity.User;
@@ -42,6 +43,12 @@ public class PlantController {
         Long userId = customUserDetails.getUserId();
         List<PlantSummaryDTO> plants = plantService.getPlantsByUserId(userId);
         return ResponseEntity.ok(plants);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PlantDetailDTO> getPlant(@PathVariable("id") Long plantId) {
+        PlantDetailDTO plant = plantService.getPlantDetailsByPlantId(plantId);
+        return ResponseEntity.ok(plant);
     }
 
 }

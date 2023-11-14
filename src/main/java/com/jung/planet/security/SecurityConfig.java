@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 인증 요구 사항 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/login", "/diary/{id}").permitAll()
+                        .requestMatchers("/users/login", "/diary/{id}","/plants/{id}").permitAll()
                         .anyRequest().authenticated()
                 )
                 // JWT 필터 추가
