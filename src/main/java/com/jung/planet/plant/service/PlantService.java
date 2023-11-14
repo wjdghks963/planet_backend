@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,7 +78,7 @@ public class PlantService {
         diaryDTO.setContent(diary.getContent());
         diaryDTO.setPublic(diary.getIsPublic());
         diaryDTO.setImgUrl(diary.getImgUrl());
-        diaryDTO.setCreatedAt(diary.getCreatedAt());
+        diaryDTO.setCreatedAt(diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         return diaryDTO;
     }

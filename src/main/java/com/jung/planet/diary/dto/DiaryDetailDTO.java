@@ -13,5 +13,5 @@ public class DiaryDetailDTO {
     private String content;
     private boolean isPublic;
     private String imgUrl;
-    private LocalDateTime createdAt;
+    private String createdAt;
 }
