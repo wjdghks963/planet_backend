@@ -26,6 +26,7 @@ public class UserPlantHeart {
 
     @Builder
     public UserPlantHeart(User user, Plant plant) {
+        this.id = new UserPlantHeartId(user.getId(), plant.getId());
         this.user = user;
         this.plant = plant;
     }

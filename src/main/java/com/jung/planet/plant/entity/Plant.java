@@ -1,5 +1,6 @@
 package com.jung.planet.plant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.user.entity.User;
 import jakarta.persistence.*;
@@ -20,6 +21,7 @@ public class Plant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -45,13 +47,35 @@ public class Plant {
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserPlantHeart> hearts;
 
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
 
-    @Builder
+    public void setScientificName(String scientificName) {
+        this.scientificName = scientificName;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
+    @Builder(toBuilder = true)
     public Plant(User user, String nickName, String scientificName, String imgUrl) {
         this.user = user;
         this.nickName = nickName;
         this.scientificName = scientificName;
         this.imgUrl = imgUrl;
         this.createdAt = LocalDateTime.now();
+    }
+
+
+    public void addHeart() {
+        this.heartCount += 1;
+    }
+
+    public void removeHeart() {
+        if (this.heartCount > 0) {
+            this.heartCount -= 1;
+        }
     }
 }

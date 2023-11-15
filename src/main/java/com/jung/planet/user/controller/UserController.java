@@ -30,6 +30,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> getCurrentUser(@RequestBody UserDTO userDTO) {
+        logger.debug("USER LOGIN :: {} ",userDTO);
         User user = userService.processUser(userDTO);
         String access_token = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
 
