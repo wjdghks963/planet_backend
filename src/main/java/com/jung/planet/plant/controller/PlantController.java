@@ -26,6 +26,13 @@ public class PlantController {
 
     private final PlantService plantService;
 
+    @GetMapping
+    public ResponseEntity<?> getPlants(@RequestParam(defaultValue = "0") int page) {
+        List<PlantSummaryDTO> plants = plantService.getPlantsByRecent(page);
+        return ResponseEntity.ok(plants);
+    }
+
+
     @PostMapping("/add")
     public ResponseEntity<?> addPlant(@AuthenticationPrincipal CustomUserDetails user, @RequestBody PlantFormDTO plantFormDTO) {
         logger.info("Request to add plant: {}", plantFormDTO);
@@ -60,7 +67,7 @@ public class PlantController {
     }
 
 
-    @GetMapping
+    @GetMapping("/my")
     public ResponseEntity<List<PlantSummaryDTO>> getPlants(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         Long userId = customUserDetails.getUserId();
         List<PlantSummaryDTO> plants = plantService.getPlantsByUserId(userId);

@@ -11,6 +11,10 @@ import com.jung.planet.user.entity.User;
 import com.jung.planet.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +73,17 @@ public class PlantService {
 
 
     @Transactional(readOnly = true)
+    public List<PlantSummaryDTO> getPlantsByRecent(int page) {
+        Pageable pageable = PageRequest.of(page, 4, Sort.by("createdAt").descending());
+        Page<Plant> plantPage = plantRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        return plantPage.getContent().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+
+    @Transactional(readOnly = true)
     public PlantDetailDTO getPlantDetailsByPlantId(Long userId, Long plantId) {
         Plant plant = plantRepository.findById(plantId).orElseThrow(/* 예외 처리 */);
         return convertToDetailDto(userId, plant);
@@ -84,6 +99,7 @@ public class PlantService {
 
     private PlantSummaryDTO convertToDto(Plant plant) {
         PlantSummaryDTO dto = new PlantSummaryDTO();
+        dto.setId(plant.getId());
         dto.setNickName(plant.getNickName());
         dto.setHeartCount(plant.getHeartCount());
         dto.setImgUrl(plant.getImgUrl());
