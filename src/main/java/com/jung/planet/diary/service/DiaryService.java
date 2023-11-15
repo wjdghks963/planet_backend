@@ -24,10 +24,10 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final PlantRepository plantRepository;
 
-
     @Transactional(readOnly = true)
-    public Diary findDiary(Long diaryId) {
-        return diaryRepository.findById(diaryId).orElseThrow(() -> new EntityNotFoundException("Diary with ID " + diaryId + " not found"));
+    public DiaryDetailDTO findDiary(Long diaryId) {
+        Diary diary = diaryRepository.findById(diaryId).orElseThrow(() -> new EntityNotFoundException("Diary with ID " + diaryId + " not found"));
+        return convertToDiaryDetailDTO(diary);
     }
 
 
