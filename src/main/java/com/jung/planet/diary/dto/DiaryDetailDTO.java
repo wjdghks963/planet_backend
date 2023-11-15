@@ -3,7 +3,6 @@ package com.jung.planet.diary.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -14,4 +13,6 @@ public class DiaryDetailDTO {
     private boolean isPublic;
     private String imgUrl;
     private String createdAt;
+
+
 }
