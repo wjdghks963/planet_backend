@@ -2,7 +2,6 @@ package com.jung.planet.plant.service;
 
 import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.entity.Diary;
-import com.jung.planet.plant.dto.PlantDTO;
 import com.jung.planet.plant.dto.PlantDetailDTO;
 import com.jung.planet.plant.dto.PlantFormDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
@@ -10,6 +9,7 @@ import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
 import com.jung.planet.user.entity.User;
 import com.jung.planet.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,21 +67,28 @@ public class PlantService {
                 .collect(Collectors.toList());
     }
 
-    private PlantSummaryDTO convertToDto(Plant plant) {
-        PlantSummaryDTO dto = new PlantSummaryDTO();
-        dto.setPlantId(plant.getId());
-        dto.setNickName(plant.getNickName());
-        dto.setHeartCount(plant.getHeartCount());
-        dto.setImgUrl(plant.getImgUrl());
-        dto.setPeriod(calculatePeriod(plant.getCreatedAt()));
-        return dto;
-    }
-
 
     @Transactional(readOnly = true)
     public PlantDetailDTO getPlantDetailsByPlantId(Long userId, Long plantId) {
         Plant plant = plantRepository.findById(plantId).orElseThrow(/* 예외 처리 */);
         return convertToDetailDto(userId, plant);
+    }
+
+
+    @Transactional
+    public void removePlant(Long plantId) {
+        Plant plant = plantRepository.findById(plantId)
+                .orElseThrow(() -> new EntityNotFoundException("Plant not found with id: " + plantId));
+        plantRepository.delete(plant);
+    }
+
+    private PlantSummaryDTO convertToDto(Plant plant) {
+        PlantSummaryDTO dto = new PlantSummaryDTO();
+        dto.setNickName(plant.getNickName());
+        dto.setHeartCount(plant.getHeartCount());
+        dto.setImgUrl(plant.getImgUrl());
+        dto.setPeriod(calculatePeriod(plant.getCreatedAt()));
+        return dto;
     }
 
     private PlantDetailDTO convertToDetailDto(Long userId, Plant plant) {
