@@ -1,6 +1,7 @@
 package com.jung.planet.user.controller;
 
 import com.jung.planet.security.JwtTokenProvider;
+import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.dto.JwtResponse;
 import com.jung.planet.user.dto.UserDTO;
 import com.jung.planet.user.entity.User;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -30,12 +32,19 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> getCurrentUser(@RequestBody UserDTO userDTO) {
-        logger.debug("USER LOGIN :: {} ",userDTO);
+        logger.debug("USER LOGIN :: {} ", userDTO);
         User user = userService.processUser(userDTO);
         String access_token = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
 
         return ResponseEntity.ok(new JwtResponse(access_token, user.getRefreshToken(), user));
     }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        userService.deleteUser(customUserDetails.getUserId());
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshTokens(@RequestParam String refreshToken) {
@@ -46,7 +55,6 @@ public class UserController {
             String newAccessToken = jwtTokenProvider.createAccessToken(user.get().getId(), user.get().getEmail());
             String newRefreshToken = jwtTokenProvider.createRefreshToken(user.get().getId(), user.get().getEmail());
 
-            // Update user's refresh token
             userService.updateRefreshToken(user.get().getId(), newRefreshToken);
 
             Map<String, String> tokens = new HashMap<>();

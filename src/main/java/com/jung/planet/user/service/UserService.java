@@ -4,6 +4,7 @@ import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.user.dto.UserDTO;
 import com.jung.planet.user.entity.User;
 import com.jung.planet.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,11 @@ public class UserService {
             existedUer.setRefreshToken(refreshToken);
             return existedUer;
         }
+    }
+
+    public void deleteUser(Long userId) {
+        userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+        userRepository.deleteById(userId);
     }
 
 
