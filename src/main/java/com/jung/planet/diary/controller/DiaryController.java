@@ -1,6 +1,8 @@
 package com.jung.planet.diary.controller;
 
 import com.jung.planet.diary.dto.DiaryDTO;
+import com.jung.planet.diary.dto.DiaryDetailDTO;
+import com.jung.planet.diary.dto.request.DiaryEditDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.diary.service.DiaryService;
 import com.jung.planet.plant.controller.PlantController;
@@ -25,8 +27,8 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Diary> findDiary(@PathVariable("id") Long diaryId) {
-        Diary diary = diaryService.findDiary(diaryId);
+    public ResponseEntity<DiaryDetailDTO> findDiary(@PathVariable("id") Long diaryId) {
+        DiaryDetailDTO diary = diaryService.findDiary(diaryId);
         logger.info("Diary: {}", diary);
 
         return ResponseEntity.ok(diary);
@@ -34,7 +36,7 @@ public class DiaryController {
 
 
     @PostMapping("/add")
-    public ResponseEntity<Map<String, Object>> addDiary(@Valid @RequestBody DiaryDTO diaryDTO) {
+    public ResponseEntity<Map<String, Object>> addDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody DiaryDTO diaryDTO) {
         logger.info("Request to add diary: {}", diaryDTO);
         Diary diary = diaryService.addDiary(diaryDTO);
         logger.info("Diary added: {}", diary);
@@ -43,9 +45,16 @@ public class DiaryController {
     }
 
     @DeleteMapping("/remove/{id}")
-    public ResponseEntity<?> removeDiary(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("id") Long diaryId) {
-            diaryService.deleteDiary(diaryId, user.getUserId());
+    public ResponseEntity<?> removeDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId) {
+            diaryService.deleteDiary(diaryId, customUserDetails.getUserId());
             return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+
+    @PostMapping("/edit/{id}")
+    public ResponseEntity<?> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId, @RequestBody DiaryEditDTO diaryEditDTO) {
+        diaryService.editDiary(diaryId, diaryEditDTO,customUserDetails.getUserId());
+        return ResponseEntity.ok(Map.of("ok", true));
     }
 
 
