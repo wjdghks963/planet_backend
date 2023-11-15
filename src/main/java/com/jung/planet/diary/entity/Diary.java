@@ -48,4 +48,21 @@ public class Diary {
         this.content = content;
         this.createdAt = LocalDateTime.now();
     }
+
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setPublic(Boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
 }
