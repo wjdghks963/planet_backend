@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class PlantSummaryDTO {
+    private Long id;
     private String nickName;
     private String imgUrl;
     private int period;
