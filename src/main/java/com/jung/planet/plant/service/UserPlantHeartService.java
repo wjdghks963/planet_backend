@@ -23,6 +23,7 @@ public class UserPlantHeartService {
     private final UserRepository userRepository;
     private final PlantRepository plantRepository;
 
+
     @Transactional
     public boolean togglePlantHeart(Long userId, Long plantId) {
         User user = userRepository.findById(userId)
@@ -30,20 +31,27 @@ public class UserPlantHeartService {
         Plant plant = plantRepository.findById(plantId)
                 .orElseThrow(() -> new EntityNotFoundException("Plant not found"));
 
-        UserPlantHeartId userPlantHeartId = UserPlantHeartId.builder().userId(userId).plantId(plantId).build();
-
+        UserPlantHeartId userPlantHeartId = new UserPlantHeartId(userId, plantId);
         Optional<UserPlantHeart> userPlantHeart = userPlantHeartRepository.findById(userPlantHeartId);
 
         if (userPlantHeart.isPresent()) {
-            // 좋아요가 이미 존재하면 삭제
+            // 좋아요가 이미 존재하면 삭제하고 하트 카운트 감소
             userPlantHeartRepository.delete(userPlantHeart.get());
-            return false; // 좋아요 취소를 나타내는 false 반환
+            plant.removeHeart();
         } else {
-            // 좋아요가 존재하지 않으면 추가
+            // 좋아요가 존재하지 않으면 추가하고 하트 카운트 증가
             UserPlantHeart newUserPlantHeart = new UserPlantHeart(user, plant);
             userPlantHeartRepository.save(newUserPlantHeart);
-            return true; // 좋아요 설정을 나타내는 true 반환
+            plant.addHeart();
         }
+
+        // 변경된 plant 객체를 저장
+        plantRepository.save(plant);
+
+        return userPlantHeart.isEmpty();
     }
+
+
+
 
 }

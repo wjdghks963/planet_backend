@@ -67,4 +67,15 @@ public class Plant {
         this.imgUrl = imgUrl;
         this.createdAt = LocalDateTime.now();
     }
+
+
+    public void addHeart() {
+        this.heartCount += 1;
+    }
+
+    public void removeHeart() {
+        if (this.heartCount > 0) {
+            this.heartCount -= 1;
+        }
+    }
 }
