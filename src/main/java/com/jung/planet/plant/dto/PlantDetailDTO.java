@@ -11,11 +11,13 @@ import java.util.List;
 @Setter
 public class PlantDetailDTO {
 
+    private Long plantId;
     private String nickName;
     private String scientificName;
     private String imgUrl;
     private int period;
     private int heartCount;
     private List<DiaryDetailDTO> diaries;
+    private boolean isMine;
 
 }
