@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 인증 요구 사항 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/login", "/plants", "/diary/{id}", "/plants/{id}").permitAll()
+                        .requestMatchers("/users/login", "/plants", "/plants/random", "/plants/{id:[\\d]+}","/diary/{id:[\\d]+}",  "/refresh").permitAll()
                         .anyRequest().authenticated()
                 );
 

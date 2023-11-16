@@ -14,8 +14,6 @@ public class DiaryDTO {
     @NotNull(message = "plant를 찾을 수 없습니다.")
     private Long plantId;
 
-    @NotNull(message = "제목은 꼭 필요합니다.")
-    private String title;
 
     @NotNull(message = "이미지는 꼭 필요합니다.")
     private String imgUrl;
@@ -27,7 +25,7 @@ public class DiaryDTO {
 
 
     public Diary toEntity(Plant plant) {
-        return Diary.builder().plant(plant).title(title).content(content).imgUrl(imgUrl).isPublic(isPublic).build();
+        return Diary.builder().plant(plant).content(content).imgUrl(imgUrl).isPublic(isPublic).build();
     }
 
 }
