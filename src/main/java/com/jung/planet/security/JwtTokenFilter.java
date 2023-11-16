@@ -27,14 +27,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         try {
             String token = resolveToken(request);
-            if (token != null && jwtTokenProvider.validateToken(token)) {
+           boolean isTokenOk = jwtTokenProvider.validateToken(token);
+            if (token != null && isTokenOk) {
                 Authentication auth = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         } catch (CustomJwtException e) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            SecurityContextHolder.clearContext();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            return;
         }
 
         filterChain.doFilter(request, response);

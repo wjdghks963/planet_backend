@@ -53,18 +53,6 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(ExpiredJwtException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "JWT Token is expired");
-        response.put("timestamp", LocalDateTime.now());
-        response.put("details", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
-
-
     // 다른 예외들에 대한 처리도 이곳에 추가할 수 있습니다.
     // 예를 들어, IllegalArgumentException에 대한 처리
     @ExceptionHandler(IllegalArgumentException.class)
@@ -77,4 +65,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleGlobalException(Exception e) {
         return new ResponseEntity<>("An error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(UnauthorizedActionException.class)
+    public ResponseEntity<?> handleUnauthorizedActionException(UnauthorizedActionException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+
 }
