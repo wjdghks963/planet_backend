@@ -23,8 +23,6 @@ public class Diary {
     @JoinColumn(name = "plant_id", nullable = false)
     private Plant plant;
 
-    @Column(nullable = false)
-    private String title;
 
     @Column(nullable = false)
     private Boolean isPublic;
@@ -40,19 +38,14 @@ public class Diary {
 
 
     @Builder
-    public Diary(Plant plant, String title, Boolean isPublic, String imgUrl, String content) {
+    public Diary(Plant plant, Boolean isPublic, String imgUrl, String content) {
         this.plant = plant;
-        this.title = title;
         this.isPublic = isPublic;
         this.imgUrl = imgUrl;
         this.content = content;
         this.createdAt = LocalDateTime.now();
     }
 
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
 
     public void setPublic(Boolean aPublic) {
         isPublic = aPublic;
