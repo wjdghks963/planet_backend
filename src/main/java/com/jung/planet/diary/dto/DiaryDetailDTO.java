@@ -8,11 +8,10 @@ import lombok.Setter;
 @Setter
 public class DiaryDetailDTO {
     private Long id;
-    private String title;
     private String content;
     private boolean isPublic;
     private String imgUrl;
     private String createdAt;
-
+    private boolean isMine;
 
 }
