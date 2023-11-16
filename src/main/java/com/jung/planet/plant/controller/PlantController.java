@@ -1,7 +1,7 @@
 package com.jung.planet.plant.controller;
 
 import com.jung.planet.plant.dto.PlantDetailDTO;
-import com.jung.planet.plant.dto.PlantFormDTO;
+import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.service.PlantService;
@@ -34,10 +34,10 @@ public class PlantController {
 
 
     @PostMapping("/add")
-    public ResponseEntity<?> addPlant(@AuthenticationPrincipal CustomUserDetails user, @RequestBody PlantFormDTO plantFormDTO) {
+    public ResponseEntity<?> addPlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody PlantFormDTO plantFormDTO) {
         logger.info("Request to add plant: {}", plantFormDTO);
-        logger.info("Request token: {}", user.toString());
-        plantFormDTO.setUserId(user.getUserId());
+
+        plantFormDTO.setUserId(customUserDetails.getUserId());
         Plant newPlant = plantService.addPlant(plantFormDTO);
         logger.info("Plant added: {}", newPlant);
 
@@ -47,6 +47,7 @@ public class PlantController {
     @PostMapping("/edit/{id}")
     public ResponseEntity<?> editPlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody PlantFormDTO plantFormDTO, @PathVariable("id") Long plantId) {
         Long userId = customUserDetails.getUserId();
+        logger.debug("userId :: {}", userId);
         // 식물 소유권 확인
         if (!plantService.isOwnerOfPlant(userId, plantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not own this plant");
@@ -71,7 +72,15 @@ public class PlantController {
     public ResponseEntity<List<PlantSummaryDTO>> getPlants(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         Long userId = customUserDetails.getUserId();
         List<PlantSummaryDTO> plants = plantService.getPlantsByUserId(userId);
+
         return ResponseEntity.ok(plants);
+    }
+
+
+    @GetMapping("/random")
+    public ResponseEntity<List<PlantSummaryDTO>> getRandomPlants() {
+        List<PlantSummaryDTO> randomPlants = plantService.getRandomPlants();
+        return ResponseEntity.ok(randomPlants);
     }
 
     @GetMapping("/{id}")

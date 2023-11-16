@@ -3,7 +3,7 @@ package com.jung.planet.plant.service;
 import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.plant.dto.PlantDetailDTO;
-import com.jung.planet.plant.dto.PlantFormDTO;
+import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -39,7 +38,7 @@ public class PlantService {
         User user = userRepository.findById(plantFormDTO.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String encodedImg = plantFormDTO.getImg().substring(0, 20);
+        String encodedImg = plantFormDTO.getImgData().substring(0, 20);
 
         //byte[] imageBytes = Base64.getDecoder().decode(encodedImg);
 
@@ -53,7 +52,7 @@ public class PlantService {
         Plant plant = plantRepository.findById(plantId)
                 .orElseThrow(() -> new RuntimeException("Plant not found"));
 
-        String encodedImg = plantFormDTO.getImg().substring(0, 20);
+        String encodedImg = plantFormDTO.getImgData().substring(0, 20);
 
         //byte[] imageBytes = Base64.getDecoder().decode(encodedImg);
         plant.setNickName(plantFormDTO.getNickName());
@@ -78,6 +77,14 @@ public class PlantService {
         Page<Plant> plantPage = plantRepository.findAllByOrderByCreatedAtDesc(pageable);
 
         return plantPage.getContent().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlantSummaryDTO> getRandomPlants() {
+        List<Plant> randomPlants = plantRepository.findRandomPlants();
+        return randomPlants.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -130,7 +137,6 @@ public class PlantService {
     private DiaryDetailDTO convertToDiaryDto(Diary diary) {
         DiaryDetailDTO diaryDTO = new DiaryDetailDTO();
         diaryDTO.setId(diary.getId());
-        diaryDTO.setTitle(diary.getTitle());
         diaryDTO.setContent(diary.getContent());
         diaryDTO.setPublic(diary.getIsPublic());
         diaryDTO.setImgUrl(diary.getImgUrl());
