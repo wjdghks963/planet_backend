@@ -1,4 +1,4 @@
-package com.jung.planet.plant.dto;
+package com.jung.planet.plant.dto.request;
 
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
@@ -11,7 +11,7 @@ public class PlantFormDTO {
     private Long userId;
     private String nickName;
     private String scientificName;
-    private String img;
+    private String imgData;
 
 
     public Plant toEntity(User user, String imgUrl) {
