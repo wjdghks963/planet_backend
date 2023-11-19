@@ -3,8 +3,10 @@ package com.jung.planet.r2;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -26,17 +28,24 @@ public class CloudflareR2Uploader {
 
 
     private final CloudFlareR2Utils cloudFlareR2Utils;
+    private final CloudFlarePurgeCache cloudFlarePurgeCache;
+
     private final S3Client s3Client;
 
     private final String bucketName;
     private final String endPointUri;
     private final String storagePointUri;
 
-    public CloudflareR2Uploader(@Value("${cloudflareR2.access_id}") String access_id, @Value("${cloudflareR2.secret_key}") String secret_key, @Value("${cloudflareR2.end_point}") String end_point, @Value("${cloudflareR2.storage_point}") String storage_point, @Value("${cloudflareR2.bucket_name}") String bucket_name) {
+
+    @Autowired
+    public CloudflareR2Uploader(CloudFlarePurgeCache cloudFlarePurgeCache, @Value("${cloudflareR2.access_id}") String access_id, @Value("${cloudflareR2.secret_key}") String secret_key, @Value("${cloudflareR2.end_point}") String end_point, @Value("${cloudflareR2.storage_point}") String storage_point, @Value("${cloudflareR2.bucket_name}") String bucket_name) {
         this.cloudFlareR2Utils = new CloudFlareR2Utils();
         this.bucketName = bucket_name;
         this.endPointUri = end_point;
         this.storagePointUri = storage_point;
+        this.cloudFlarePurgeCache = cloudFlarePurgeCache;
+
+
 
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(access_id, secret_key);
 
@@ -52,7 +61,7 @@ public class CloudflareR2Uploader {
 
         String imageType = "thumbnail";
         String filePath = user.getEmail() + "/" + plant.getId()
-                + "/" + imageType + "/" + "image.jpg";
+                + "/" + imageType + "/image.jpg";
 
         String fileName = storagePointUri + filePath;
         plant.setImgUrl(fileName);
@@ -69,22 +78,29 @@ public class CloudflareR2Uploader {
     }
 
     public void editPlantImage(User user, Plant plant, ByteBuffer imageBuffer) {
+        String imageType = "thumbnail";
+        String filePath = user.getEmail() + "/" + plant.getId() + "/" + imageType + "/image.jpg";
+        String fileName = storagePointUri + filePath;
+
+
         String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
 
-        String existingImageHash = retrieveImageHashFromR2(user, plant);
+        String existingImageHash = retrieveImageHashFromR2(filePath);
 
         // 이미지 해시 비교
         if (!imageHash.equals(existingImageHash)) {
+            // 이미지 다르면 캐시 삭제
             uploadPlantImage(user, plant, imageBuffer);
+            cloudFlarePurgeCache.purgeCache(fileName);
+
         } else {
-            plant.setImgUrl(plant.getImgUrl());
+            //plant.setImgUrl(plant.getImgUrl());
         }
     }
 
 
-    public String retrieveImageHashFromR2(User user, Plant plant) {
-        String imageType = "thumbnail";
-        String filePath = user.getEmail() + "/" + plant.getId() + "/" + imageType + "/image.jpg";
+    public String retrieveImageHashFromR2(String filePath) {
+
 
         try {
             HeadObjectResponse response = s3Client.headObject(HeadObjectRequest.builder()
