@@ -27,8 +27,14 @@ public class PlantController {
     private final PlantService plantService;
 
     @GetMapping
-    public ResponseEntity<?> getPlants(@RequestParam(defaultValue = "0") int page) {
-        List<PlantSummaryDTO> plants = plantService.getPlantsByRecent(page);
+    public ResponseEntity<?> getPlants(@RequestParam(defaultValue = "recent") String type,
+                                       @RequestParam(defaultValue = "0") int page) {
+        List<PlantSummaryDTO> plants;
+        if ("popular".equals(type)) {
+            plants = plantService.getPlantsByPopularity(page);
+        } else {
+            plants = plantService.getPlantsByRecent(page);
+        }
         return ResponseEntity.ok(plants);
     }
 
@@ -41,7 +47,7 @@ public class PlantController {
         Plant newPlant = plantService.addPlant(plantFormDTO);
         logger.info("Plant added: {}", newPlant);
 
-        return ResponseEntity.ok(newPlant);
+        return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/edit/{id}")
@@ -50,7 +56,7 @@ public class PlantController {
         logger.debug("userId :: {}", userId);
         // 식물 소유권 확인
         if (!plantService.isOwnerOfPlant(userId, plantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not own this plant");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("식물의 주인이 아닙니다.");
         }
 
 
@@ -94,21 +100,22 @@ public class PlantController {
     @DeleteMapping("/remove/{id}")
     public ResponseEntity<?> deletePlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
         Long userId = customUserDetails.getUserId();
+        String userEmail = customUserDetails.getUsername();
 
         if (!plantService.isOwnerOfPlant(userId, plantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not own this plant");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("식물에 대한 권한이 없습니다.");
         }
 
 
         try {
-            plantService.removePlant(plantId);
+            plantService.removePlant(plantId, userEmail);
             logger.info("Plant deleted");
             return ResponseEntity.ok(Map.of("ok", true));
         } catch (Exception e) {
             logger.error("Error delete plant: {}", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error occurred while editing the plant.");
+                    .body("삭제 중 에러가 발생했습니다.");
         }
 
     }
