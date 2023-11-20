@@ -1,5 +1,6 @@
 package com.jung.planet.r2;
 
+import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
 import lombok.Getter;
@@ -46,7 +47,6 @@ public class CloudflareR2Uploader {
         this.cloudFlarePurgeCache = cloudFlarePurgeCache;
 
 
-
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(access_id, secret_key);
 
         this.s3Client = S3Client.builder()
@@ -67,14 +67,7 @@ public class CloudflareR2Uploader {
         plant.setImgUrl(fileName);
         logger.info("img URL :: {}", plant.getImgUrl());
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .contentType("image/jpeg") // MIME 타입 설정
-                .metadata(Map.of("Content-Disposition", "inline", "Image-Hash", imageHash))
-                .key(filePath).acl(ObjectCannedACL.PUBLIC_READ)
-                .build();
-
-        s3Client.putObject(putObjectRequest, RequestBody.fromByteBuffer(imageBuffer));
+        putObjectToR2(imageBuffer, imageHash, filePath);
     }
 
     public void editPlantImage(User user, Plant plant, ByteBuffer imageBuffer) {
@@ -93,26 +86,9 @@ public class CloudflareR2Uploader {
             uploadPlantImage(user, plant, imageBuffer);
             cloudFlarePurgeCache.purgeCache(fileName);
 
-        } else {
-            //plant.setImgUrl(plant.getImgUrl());
         }
     }
 
-
-    public String retrieveImageHashFromR2(String filePath) {
-
-
-        try {
-            HeadObjectResponse response = s3Client.headObject(HeadObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(filePath)
-                    .build());
-
-            return response.metadata().get("Image-Hash");
-        } catch (S3Exception e) {
-            throw new RuntimeException("Failed to retrieve image hash from R2", e);
-        }
-    }
 
     public void deletePlant(Long plantId, String userEmail) {
 
@@ -137,6 +113,100 @@ public class CloudflareR2Uploader {
         } catch (S3Exception e) {
             // 로그 기록, 예외 처리 로직
             throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+        }
+    }
+
+
+    // Diary
+    public void uploadDiaryImage(String userEmail, Diary diary, ByteBuffer imageBuffer) {
+        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        Plant plant = diary.getPlant();
+
+        String imageType = "diary";
+
+        String filePath = userEmail + "/" + plant.getId() + "/" + imageType + "/" + diary.getCreatedAt()
+                + "/image.jpg";
+
+        String fileName = storagePointUri + filePath;
+        diary.setImgUrl(fileName);
+        logger.info("img URL :: {}", diary.getImgUrl());
+
+        putObjectToR2(imageBuffer, imageHash, filePath);
+    }
+
+
+    public void editDiaryImage(String userEmail, Diary diary, ByteBuffer imageBuffer) {
+        String imageType = "diary";
+        Plant plant = diary.getPlant();
+
+        String filePath = userEmail + "/" + plant.getId() + "/" + imageType + "/" + diary.getCreatedAt()
+                + "/image.jpg";
+
+        String fileName = storagePointUri + filePath;
+
+
+        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+
+        String existingImageHash = retrieveImageHashFromR2(filePath);
+
+        // 이미지 해시 비교
+        if (!imageHash.equals(existingImageHash)) {
+            // 이미지 다르면 캐시 삭제
+            uploadDiaryImage(userEmail, diary, imageBuffer);
+            cloudFlarePurgeCache.purgeCache(fileName);
+
+        }
+    }
+
+    public void deleteDiary(Diary diary, String userEmail) {
+        Plant plant = diary.getPlant();
+        String imageType = "diary";
+
+
+        try {
+            String filePath = userEmail + "/" + plant.getId() + "/" + imageType + "/" + diary.getCreatedAt()
+                    + "/image.jpg";
+
+
+
+            logger.info("deleted uri : {}", filePath);
+
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName).key(filePath)
+                    .build();
+            s3Client.deleteObject(deleteRequest);
+
+
+        } catch (S3Exception e) {
+            // 로그 기록, 예외 처리 로직
+            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+        }
+    }
+
+
+    private void putObjectToR2(ByteBuffer imageBuffer, String imageHash, String filePath) {
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .contentType("image/jpeg") // MIME 타입 설정
+                .metadata(Map.of("Content-Disposition", "inline", "Image-Hash", imageHash))
+                .key(filePath).acl(ObjectCannedACL.PUBLIC_READ)
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromByteBuffer(imageBuffer));
+    }
+
+
+    public String retrieveImageHashFromR2(String filePath) {
+        try {
+            HeadObjectResponse response = s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(filePath)
+                    .build());
+
+            return response.metadata().get("Image-Hash");
+        } catch (S3Exception e) {
+            throw new RuntimeException("Failed to retrieve image hash from R2", e);
         }
     }
 }

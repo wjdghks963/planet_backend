@@ -33,17 +33,18 @@ public class Diary {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = true)
     private LocalDateTime createdAt;
 
 
+
     @Builder
-    public Diary(Plant plant, Boolean isPublic, String imgUrl, String content) {
+    public Diary(Plant plant, Boolean isPublic, String imgUrl, String content, LocalDateTime createdAt) {
         this.plant = plant;
         this.isPublic = isPublic;
         this.imgUrl = imgUrl;
         this.content = content;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now(); // 조건부 설정
     }
 
 
