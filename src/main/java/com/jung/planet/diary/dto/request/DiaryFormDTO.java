@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 @Getter
 @Setter
@@ -21,7 +24,12 @@ public class DiaryFormDTO {
 
     private Boolean isPublic;
 
+    private String createdAt; // 추가된 필드
+
+
     public Diary toEntity(Plant plant, String imgUrl) {
-        return Diary.builder().plant(plant).content(content).imgUrl(imgUrl).isPublic(isPublic).build();
+        LocalDateTime parsedCreatedAt = LocalDateTime.parse(createdAt + "T00:00:00", DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+        return Diary.builder().plant(plant).content(content).imgUrl(imgUrl).isPublic(isPublic).createdAt(parsedCreatedAt).build();
     }
 }

@@ -34,7 +34,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             }
         } catch (CustomJwtException e) {
             SecurityContextHolder.clearContext();
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             return;
         }
 

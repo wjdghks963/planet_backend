@@ -25,9 +25,8 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<DiaryDetailDTO> findDiary(@PathVariable("id") Long diaryId) {
-        DiaryDetailDTO diary = diaryService.findDiary(diaryId);
-        logger.info("Diary: {}", diary);
+    public ResponseEntity<DiaryDetailDTO> findDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId) {
+        DiaryDetailDTO diary = diaryService.findDiary(diaryId, customUserDetails.getUserId());
 
         return ResponseEntity.ok(diary);
     }
@@ -35,23 +34,23 @@ public class DiaryController {
 
     @PostMapping("/add")
     public ResponseEntity<Map<String, Object>> addDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody DiaryFormDTO diaryFormDTO) {
-        logger.info("Request to add diary: {}", diaryFormDTO);
-        Diary diary = diaryService.addDiary(diaryFormDTO);
+        logger.info("Request to add diary: {}", diaryFormDTO.toString());
+        Diary diary = diaryService.addDiary(customUserDetails.getUsername(), diaryFormDTO);
         logger.info("Diary added: {}", diary);
 
-        return ResponseEntity.ok(Map.of("ok", true));
-    }
-
-    @DeleteMapping("/remove/{id}")
-    public ResponseEntity<?> removeDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId) {
-        diaryService.deleteDiary(diaryId, customUserDetails.getUserId());
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
 
     @PostMapping("/edit/{id}")
     public ResponseEntity<?> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId, @RequestBody DiaryFormDTO diaryEditDTO) {
-        diaryService.editDiary(diaryId, diaryEditDTO, customUserDetails.getUserId());
+        diaryService.editDiary(customUserDetails, diaryId, diaryEditDTO);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<?> removeDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long diaryId) {
+        diaryService.deleteDiary(diaryId, customUserDetails);
         return ResponseEntity.ok(Map.of("ok", true));
     }
 

@@ -1,7 +1,7 @@
 package com.jung.planet.exception;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -9,9 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +35,17 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Object> handleDatabaseException(DataAccessException ex) {
+        Map<String, Object> responseBody = new LinkedHashMap<>();
+        responseBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        responseBody.put("error", "Database Error");
+        responseBody.put("message", "서버 에러");
+
+        return new ResponseEntity<>(responseBody, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
     // MethodArgumentNotValidException에 대한 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException e) {
@@ -53,18 +62,24 @@ public class GlobalExceptionHandler {
     }
 
 
-    // 다른 예외들에 대한 처리도 이곳에 추가할 수 있습니다.
-    // 예를 들어, IllegalArgumentException에 대한 처리
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException e) {
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("message", e.getMessage());
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
-    // 모든 예외에 대한 처리
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGlobalException(Exception e) {
-        return new ResponseEntity<>("An error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<?> handleGlobalException(Exception e) {
+//        return new ResponseEntity<>("An error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<?> handleUnauthorizedActionException(UnauthorizedActionException e) {
