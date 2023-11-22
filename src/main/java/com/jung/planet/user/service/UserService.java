@@ -1,11 +1,19 @@
 package com.jung.planet.user.service;
 
+import com.jung.planet.exception.UnauthorizedActionException;
+import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.JwtTokenProvider;
+import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.dto.UserDTO;
+import com.jung.planet.user.entity.Subscription;
+import com.jung.planet.user.entity.SubscriptionType;
 import com.jung.planet.user.entity.User;
+import com.jung.planet.user.entity.UserRole;
 import com.jung.planet.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,32 +24,95 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CloudflareR2Uploader cloudflareR2Uploader;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
 
     @Transactional
-    public User processUser(UserDTO userDTO) {
+    public User adminUser(UserDTO userDTO) {
+        Optional<User> user = userRepository.findByEmail(userDTO.getEmail());
 
-        Optional<User> user = userRepository.findByEmail(userDTO.toEntity().getEmail());
-
-        // 사용자가 존재하지 않으면 새로운 사용자를 생성
         if (user.isEmpty()) {
-            User newUser = User.builder().email(userDTO.getEmail()).name(userDTO.getName()).build();
-            String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail());
+            Subscription subscription = Subscription.builder()
+                    .type(SubscriptionType.BASIC)
+                    .maxPlants(3)
+                    .aiServiceAccess(false)
+                    .build();
+
+            User newUser = User.builder()
+                    .email(userDTO.getEmail())
+                    .name(userDTO.getName())
+                    .subscription(subscription)
+                    .build();
+
+            subscription.setUser(newUser);
+
+            newUser.setRole(UserRole.ADMIN);
+
+            String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail(), newUser.getRole());
             newUser.setRefreshToken(refreshToken);
 
             userRepository.save(newUser);
             return newUser;
         } else {
-            User existedUer = user.get();
-            String refreshToken = jwtTokenProvider.createRefreshToken(existedUer.getId(), existedUer.getEmail());
-            existedUer.setRefreshToken(refreshToken);
-            return existedUer;
+            User existingUser = user.get();
+            String refreshToken = jwtTokenProvider.createRefreshToken(existingUser.getId(), existingUser.getEmail(), existingUser.getRole());
+            existingUser.setRefreshToken(refreshToken);
+            userRepository.save(existingUser);
+
+            return existingUser;
         }
     }
 
-    public void deleteUser(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-        userRepository.deleteById(userId);
+    @Transactional
+    public User processUser(UserDTO userDTO) {
+        Optional<User> user = userRepository.findByEmail(userDTO.getEmail());
+
+        // 사용자가 존재하지 않으면 새로운 사용자를 생성
+        if (user.isEmpty()) {
+            Subscription subscription = Subscription.builder()
+                    .type(SubscriptionType.BASIC)
+                    .maxPlants(3)
+                    .aiServiceAccess(false)
+                    .build();
+
+            User newUser = User.builder()
+                    .email(userDTO.getEmail())
+                    .name(userDTO.getName())
+                    .subscription(subscription)
+                    .build();
+
+            subscription.setUser(newUser);
+            newUser.setRole(UserRole.NORMAL);
+
+
+            String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail(), newUser.getRole());
+            newUser.setRefreshToken(refreshToken);
+
+            userRepository.save(newUser);
+            return newUser;
+        } else {
+            User existingUser = user.get();
+            String refreshToken = jwtTokenProvider.createRefreshToken(existingUser.getId(), existingUser.getEmail(), existingUser.getRole());
+            existingUser.setRefreshToken(refreshToken);
+            userRepository.save(existingUser);
+
+            return existingUser;
+        }
+    }
+
+
+    public void deleteUser(CustomUserDetails customUserDetails, Long userIdToDelete) {
+        User userToDelete = userRepository.findById(userIdToDelete)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (customUserDetails.getUserRole().equals(UserRole.ADMIN) || customUserDetails.getUserId().equals(userIdToDelete)) {
+            userRepository.deleteById(userIdToDelete);
+            cloudflareR2Uploader.deleteUser(userToDelete.getEmail());
+        } else {
+            throw new UnauthorizedActionException("삭제 권한이 없습니다.");
+        }
     }
 
 
@@ -49,7 +120,7 @@ public class UserService {
     public void updateRefreshToken(Long userId, String refreshToken) {
         Optional<User> user = userRepository.findById(userId);
         user.ifPresent(u -> {
-             u.setRefreshToken(refreshToken);
+            u.setRefreshToken(refreshToken);
             userRepository.save(u);
         });
     }
