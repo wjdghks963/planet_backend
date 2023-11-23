@@ -42,14 +42,6 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
 
 
-    @PostMapping("/admin/login")
-    public ResponseEntity<?> getAdminUser(@RequestBody UserDTO userDTO) {
-        User user = userService.adminUser(userDTO);
-        String access_token = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole());
-
-        return ResponseEntity.ok(new JwtResponse(access_token, user.getRefreshToken(), user));
-    }
-
     @PostMapping("/login")
     public ResponseEntity<?> getCurrentUser(@RequestBody UserDTO userDTO) {
         logger.debug("USER LOGIN :: {} ", userDTO);
