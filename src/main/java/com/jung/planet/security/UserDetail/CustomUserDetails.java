@@ -1,6 +1,7 @@
 package com.jung.planet.security.UserDetail;
 
 
+import com.jung.planet.user.entity.UserRole;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,14 +16,16 @@ public class CustomUserDetails implements UserDetails {
 
     private final Long userId;
     private final String username;
+    private final UserRole userRole;
     private final String password = "";
 
     private Collection<? extends GrantedAuthority> authorities;
 
 
-    public CustomUserDetails(Long userId, String username, Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(Long userId, String username, UserRole userRole, Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.username = username;
+        this.userRole = userRole;
         this.authorities = authorities;
     }
 

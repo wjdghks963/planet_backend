@@ -29,6 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new CustomUserDetails(
                 user.getId(),
                 user.getEmail(),
+                user.getRole(),
                 Collections.emptyList()
         );
     }
