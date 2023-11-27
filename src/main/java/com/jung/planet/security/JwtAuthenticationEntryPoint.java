@@ -19,18 +19,20 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", HttpStatus.UNAUTHORIZED.value());
-        body.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        if (!response.isCommitted()) {
 
-        Map<String, String> errors = new HashMap<>();
-        errors.put("message", "인증에 실패했습니다.");
-        body.put("errors", errors);
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("status", HttpStatus.UNAUTHORIZED.value());
+            body.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
 
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(new ObjectMapper().writeValueAsString(body));
+            Map<String, String> errors = new HashMap<>();
+            errors.put("message", "인증에 실패했습니다.");
+            body.put("errors", errors);
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(body));
+        }
     }
-
 
 }

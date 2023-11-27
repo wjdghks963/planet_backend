@@ -1,6 +1,8 @@
 package com.jung.planet.user.service;
 
+
 import com.jung.planet.admin.service.SlackNotificationService;
+
 import com.jung.planet.exception.UnauthorizedActionException;
 import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.JwtTokenProvider;
@@ -28,12 +30,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final CloudflareR2Uploader cloudflareR2Uploader;
+
     private final SlackNotificationService slackNotificationService;
+
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
 
-    @Transactional
+  
+   @Transactional
     public User adminUser(UserDTO userDTO) {
         Optional<User> user = userRepository.findByEmail(userDTO.getEmail());
 
@@ -75,7 +80,8 @@ public class UserService {
             return existingUser;
         }
     }
-
+  
+  
     @Transactional
     public User processUser(UserDTO userDTO) {
         Optional<User> user = userRepository.findByEmail(userDTO.getEmail());

@@ -19,5 +19,8 @@ public class PlantDetailDTO {
     private int heartCount;
     private List<DiaryDetailDTO> diaries;
     private boolean isMine;
+    private boolean isHearted;
+    private String createdAt;
+
 
 }

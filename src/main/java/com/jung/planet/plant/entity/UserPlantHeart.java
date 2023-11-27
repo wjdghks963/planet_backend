@@ -3,9 +3,11 @@ package com.jung.planet.plant.entity;
 import com.jung.planet.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
+@Getter
 @Entity
 @NoArgsConstructor
 @Table(name = "user_plant_hearts")
