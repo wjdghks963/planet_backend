@@ -1,6 +1,5 @@
 package com.jung.planet.security;
 
-import com.jung.planet.plant.controller.PlantController;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.entity.UserRole;
 import io.jsonwebtoken.Claims;
@@ -90,7 +89,7 @@ public class JwtTokenProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
-            logger.info("Token validation failed: {}" + e.getMessage().toString());
+            logger.info("Token validation failed: {}%s".formatted(e.getMessage()));
         }
         return false;
     }
