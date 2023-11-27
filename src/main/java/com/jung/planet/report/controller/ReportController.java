@@ -42,8 +42,6 @@ public class ReportController {
             List<ReportDTO> allDiaryReports = reportService.getAllDiaryReports();
             return ResponseEntity.ok(Map.of("reportedDiaries", allDiaryReports));
         }
-
-
     }
 
 
