@@ -20,7 +20,7 @@ import java.util.Map;
 @RequestMapping("/diary")
 public class DiaryController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlantController.class);
+    private static final Logger logger = LoggerFactory.getLogger(DiaryController.class);
 
     private final DiaryService diaryService;
 

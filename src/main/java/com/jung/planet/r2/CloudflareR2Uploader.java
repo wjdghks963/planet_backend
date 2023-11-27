@@ -82,6 +82,8 @@ public class CloudflareR2Uploader {
 
         // 이미지 해시 비교
         if (!imageHash.equals(existingImageHash)) {
+            logger.info("Image hash Changed now : {}, exist : {}", imageHash, existingImageHash);
+
             // 이미지 다르면 캐시 삭제
             uploadPlantImage(user, plant, imageBuffer);
             cloudFlarePurgeCache.purgeCache(fileName);
@@ -167,10 +169,7 @@ public class CloudflareR2Uploader {
             String filePath = userEmail + "/" + plant.getId() + "/" + imageType + "/" + diary.getCreatedAt()
                     + "/image.jpg";
 
-
-
             logger.info("deleted uri : {}", filePath);
-
 
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName).key(filePath)
@@ -184,12 +183,39 @@ public class CloudflareR2Uploader {
         }
     }
 
+    // User 삭제
+    public void deleteUser(String userEmail) {
+
+        try {
+            String filePath = userEmail;
+
+            ListObjectsRequest listObjects = ListObjectsRequest.builder()
+                    .bucket(bucketName)
+                    .prefix(filePath) // userEmail/
+                    .build();
+
+            ListObjectsResponse listObjectsResponse = s3Client.listObjects(listObjects);
+            for (S3Object object : listObjectsResponse.contents()) {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(object.key())
+                        .build();
+                s3Client.deleteObject(deleteRequest);
+            }
+
+
+        } catch (S3Exception e) {
+            // 로그 기록, 예외 처리 로직
+            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+        }
+    }
+
 
     private void putObjectToR2(ByteBuffer imageBuffer, String imageHash, String filePath) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .contentType("image/jpeg") // MIME 타입 설정
-                .metadata(Map.of("Content-Disposition", "inline", "Image-Hash", imageHash))
+                .metadata(Map.of("Content-Disposition", "inline", "image-hash", imageHash))
                 .key(filePath).acl(ObjectCannedACL.PUBLIC_READ)
                 .build();
 
@@ -204,7 +230,7 @@ public class CloudflareR2Uploader {
                     .key(filePath)
                     .build());
 
-            return response.metadata().get("Image-Hash");
+            return response.metadata().get("image-hash");
         } catch (S3Exception e) {
             throw new RuntimeException("Failed to retrieve image hash from R2", e);
         }

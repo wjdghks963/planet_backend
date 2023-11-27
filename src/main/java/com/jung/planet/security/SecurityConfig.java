@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers( "/users/my-info", "/users/remove", "/users/my/hearted-plants").authenticated()
                         .requestMatchers("/report/plant/{id:[\\d]+}", "/report/diary/{id:[\\d]+}").authenticated()
                         .requestMatchers("/admin/upgrade").authenticated()
+
                         .anyRequest().permitAll()
 
                 );

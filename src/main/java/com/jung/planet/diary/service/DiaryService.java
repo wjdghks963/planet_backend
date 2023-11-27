@@ -10,6 +10,7 @@ import com.jung.planet.plant.repository.PlantRepository;
 import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.entity.User;
+import com.jung.planet.user.entity.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -85,11 +86,12 @@ public class DiaryService {
 
     @Transactional
     public void deleteDiary(Long diaryId, CustomUserDetails customUserDetails) {
-        if (diaryRepository.existsById(diaryId)) {
-            Optional<Diary> diary = diaryRepository.findByIdAndUserId(diaryId, customUserDetails.getUserId());
+        Optional<Diary> diary = diaryRepository.findById(diaryId);
 
-            if (diary.isPresent()) {
-                diaryRepository.deleteById(diary.get().getId());
+        if (diary.isPresent()) {
+            // 어드민이거나 일기의 소유자일 경우 삭제 허용
+            if (customUserDetails.getUserRole().equals(UserRole.ADMIN) || diary.get().getPlant().getUser().getId().equals(customUserDetails.getUserId())) {
+                diaryRepository.deleteById(diaryId);
                 cloudflareR2Uploader.deleteDiary(diary.get(), customUserDetails.getUsername());
             } else {
                 // 소유자가 아닌 경우 예외 발생
@@ -97,7 +99,6 @@ public class DiaryService {
             }
         } else {
             throw new EntityNotFoundException("다이어리 데이터를 찾을 수 없습니다.");
-
         }
     }
 

@@ -1,5 +1,6 @@
 package com.jung.planet.exception;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,16 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex) {
+        Map<String, Object> responseBody = new LinkedHashMap<>();
+        responseBody.put("status", HttpStatus.FORBIDDEN.value());
+        responseBody.put("error", "Expired Refresh JWT");
+        responseBody.put("message", "Refresh JWT Token has expired");
+
+        return new ResponseEntity<>(responseBody, HttpStatus.FORBIDDEN);
+    }
+
     // MethodArgumentNotValidException에 대한 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException e) {
@@ -76,16 +87,23 @@ public class GlobalExceptionHandler {
     }
 
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<?> handleGlobalException(Exception e) {
-//        return new ResponseEntity<>("An error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
-
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<?> handleUnauthorizedActionException(UnauthorizedActionException e) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(Map.of("error", e.getMessage()));
+
+
+        Map<String, String> errors = new LinkedHashMap<>();
+        errors.put("message", e.getMessage());
+
+        Map<String, Object> responseBody = new LinkedHashMap<>();
+        responseBody.put("status", HttpStatus.FORBIDDEN.value());
+        responseBody.put("error", "Unauthorized Action");
+
+        responseBody.put("errors", errors);
+
+
+        return new ResponseEntity<>(responseBody, HttpStatus.FORBIDDEN);
+
+
     }
 
 
