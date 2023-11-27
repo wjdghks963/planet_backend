@@ -1,6 +1,5 @@
 package com.jung.planet.diary.service;
 
-import com.jung.planet.diary.dto.DiaryDTO;
 import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.dto.request.DiaryFormDTO;
 import com.jung.planet.diary.entity.Diary;
@@ -9,7 +8,6 @@ import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
 import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
-import com.jung.planet.user.entity.User;
 import com.jung.planet.user.entity.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +41,6 @@ public class DiaryService {
     }
 
 
-    // TODO:: R2
     @Transactional
     public Diary addDiary(String userName, DiaryFormDTO diaryFormDTO) {
         Plant plant = plantRepository.findById(diaryFormDTO.getPlantId()).orElseThrow(() -> new EntityNotFoundException("관련된 식물을 찾을 수 없습니다."));
@@ -59,7 +56,6 @@ public class DiaryService {
     }
 
 
-    // TODO:: R2
     @Transactional
     public void editDiary(CustomUserDetails customUserDetails, Long diaryId, DiaryFormDTO diaryFormDTO) {
         if (diaryRepository.existsById(diaryId)) {
