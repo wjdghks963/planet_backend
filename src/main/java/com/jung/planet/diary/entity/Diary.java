@@ -1,12 +1,15 @@
 package com.jung.planet.diary.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jung.planet.plant.entity.Plant;
+import com.jung.planet.report.entity.Report;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 
 @Entity
@@ -36,7 +39,9 @@ public class Diary {
     @Column(name = "created_at", nullable = false, updatable = true)
     private LocalDateTime createdAt;
 
-
+    @JsonIgnore
+    @OneToMany(mappedBy = "reportedDiary", cascade = CascadeType.ALL)
+    private Set<Report> reports;
 
     @Builder
     public Diary(Plant plant, Boolean isPublic, String imgUrl, String content, LocalDateTime createdAt) {
