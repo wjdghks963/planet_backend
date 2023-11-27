@@ -2,6 +2,7 @@ package com.jung.planet.security;
 
 import com.jung.planet.plant.controller.PlantController;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
+import com.jung.planet.user.entity.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,18 +22,20 @@ import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
 public class JwtTokenProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlantController.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final Key key;
 
 
     private final long validityInMilliseconds = 1000 * 60 * 60 * 12; // 12h
 
-    private final long refreshTokenValidityInMilliseconds = 604800000;
+    private final long refreshTokenValidityInMilliseconds = 1000 * 60 * 60 * 24 * 7; // 1 week
+
 
     @Autowired
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
@@ -46,9 +49,10 @@ public class JwtTokenProvider {
     }
 
 
-    public String createAccessToken(Long userId, String email) {
+    public String createAccessToken(Long userId, String email, UserRole userRole) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", userId);
+        claims.put("userRole", userRole);
         //claims.put("auth", new SimpleGrantedAuthority("ROLE_USER"));
 
         Date now = new Date();
@@ -63,9 +67,11 @@ public class JwtTokenProvider {
     }
 
 
-    public String createRefreshToken(Long userId, String email) {
+    public String createRefreshToken(Long userId, String email, UserRole userRole) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", userId);
+        claims.put("userRole", userRole);
+
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
@@ -97,10 +103,13 @@ public class JwtTokenProvider {
 
         List<GrantedAuthority> authorities = Collections.emptyList();
 
+        String userRoleStr = claims.get("userRole", String.class);
+        UserRole userRole = UserRole.valueOf(userRoleStr);
 
         CustomUserDetails principal = new CustomUserDetails(
                 claims.get("userId", Long.class),
                 claims.getSubject(),
+                userRole,
                 authorities
         );
 

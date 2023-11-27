@@ -3,9 +3,10 @@ package com.jung.planet.plant.service;
 import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.plant.dto.PlantDetailDTO;
-import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
+import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.entity.Plant;
+import com.jung.planet.plant.entity.UserPlantHeart;
 import com.jung.planet.plant.repository.PlantRepository;
 import com.jung.planet.plant.repository.UserPlantHeartRepository;
 import com.jung.planet.r2.CloudflareR2Uploader;
@@ -20,15 +21,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,11 +40,10 @@ public class PlantService {
     private final CloudflareR2Uploader cloudflareR2Uploader;
 
 
-    // TODO:: R2로 이미지 전송하는 로직 추가
     @Transactional
     public Plant addPlant(PlantFormDTO plantFormDTO) {
         User user = userRepository.findById(plantFormDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         Plant plant = plantFormDTO.toEntity(user, "encodedImg");
         plantRepository.save(plant);
@@ -61,9 +60,9 @@ public class PlantService {
     @Transactional
     public Plant editPlant(PlantFormDTO plantFormDTO, Long plantId) {
         User user = userRepository.findById(plantFormDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
         Plant plant = plantRepository.findById(plantId)
-                .orElseThrow(() -> new RuntimeException("Plant not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Plant not found"));
 
 
         ByteBuffer imageBuffer = ByteBuffer.wrap(Base64.getDecoder().decode(plantFormDTO.getImgData()));
@@ -74,6 +73,17 @@ public class PlantService {
         plant.setScientificName(plantFormDTO.getScientificName());
 
         return plantRepository.save(plant);
+    }
+
+
+    @Transactional
+    public void removePlant(Long plantId, String userEmail) {
+        Plant plant = plantRepository.findById(plantId)
+                .orElseThrow(() -> new EntityNotFoundException("해당하는 식물을 찾을 수 없습니다."));
+
+        cloudflareR2Uploader.deletePlant(plantId, userEmail);
+
+        plantRepository.delete(plant);
     }
 
     @Transactional(readOnly = true)
@@ -112,6 +122,18 @@ public class PlantService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<PlantSummaryDTO> getHeartedPlantsByUser(Long userId, int page) {
+        Pageable pageable = PageRequest.of(page, 4);
+        Page<UserPlantHeart> hearts = userPlantHeartRepository.findByUserId(userId, pageable);
+
+        return hearts.stream()
+                .map(heart -> convertToDto(heart.getPlant()))
+                .collect(Collectors.toList());
+    }
+
+
+
 
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getRandomPlants() {
@@ -127,6 +149,8 @@ public class PlantService {
     }
 
 
+
+
     @Transactional(readOnly = true)
     public PlantDetailDTO getPlantDetailsByPlantId(Long userId, Long plantId) {
         Plant plant = plantRepository.findById(plantId).orElseThrow(() -> new EntityNotFoundException("식물을 찾을 수 없습니다."));
@@ -136,14 +160,10 @@ public class PlantService {
     }
 
 
-    @Transactional
-    public void removePlant(Long plantId, String userEmail) {
-        Plant plant = plantRepository.findById(plantId)
-                .orElseThrow(() -> new EntityNotFoundException("해당하는 식물을 찾을 수 없습니다."));
 
-        cloudflareR2Uploader.deletePlant(plantId, userEmail);
-
-        plantRepository.delete(plant);
+    public int getTotalHearts(Long userId) {
+        Integer totalHearts = plantRepository.sumHeartsByUserId(userId);
+        return totalHearts != null ? totalHearts : 0;
     }
 
     private PlantSummaryDTO convertToDto(Plant plant) {

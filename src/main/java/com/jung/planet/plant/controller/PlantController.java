@@ -1,11 +1,13 @@
 package com.jung.planet.plant.controller;
 
+import com.jung.planet.exception.UnauthorizedActionException;
 import com.jung.planet.plant.dto.PlantDetailDTO;
 import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.dto.PlantSummaryDTO;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.service.PlantService;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
+import com.jung.planet.user.entity.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +30,15 @@ public class PlantController {
 
     @GetMapping
     public ResponseEntity<?> getPlants(@RequestParam(defaultValue = "recent") String type,
-                                       @RequestParam(defaultValue = "0") int page) {
-        List<PlantSummaryDTO> plants;
-        if ("popular".equals(type)) {
-            plants = plantService.getPlantsByPopularity(page);
-        } else {
-            plants = plantService.getPlantsByRecent(page);
-        }
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        List<PlantSummaryDTO> plants = switch (type) {
+            case "popular" -> plantService.getPlantsByPopularity(page);
+            case "heart" -> plantService.getHeartedPlantsByUser(userDetails.getUserId(), page);
+            default -> plantService.getPlantsByRecent(page);
+        };
+
         return ResponseEntity.ok(plants);
     }
 
@@ -74,6 +78,23 @@ public class PlantController {
     }
 
 
+    @PostMapping("/remove/{id}")
+    public ResponseEntity<?> deletePlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
+        Long userId = customUserDetails.getUserId();
+        String userEmail = customUserDetails.getUsername();
+
+        if (!plantService.isOwnerOfPlant(userId, plantId) && !customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
+            throw new UnauthorizedActionException("식물에 대한 권한이 없습니다.");
+        }
+
+        plantService.removePlant(plantId, userEmail);
+        logger.info("Plant deleted");
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+
+
+
     @GetMapping("/my")
     public ResponseEntity<List<PlantSummaryDTO>> getPlants(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         Long userId = customUserDetails.getUserId();
@@ -94,30 +115,6 @@ public class PlantController {
         Long userId = customUserDetails != null ? customUserDetails.getUserId() : -1;
         PlantDetailDTO plant = plantService.getPlantDetailsByPlantId(userId, plantId);
         return ResponseEntity.ok(plant);
-    }
-
-
-    @DeleteMapping("/remove/{id}")
-    public ResponseEntity<?> deletePlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
-        Long userId = customUserDetails.getUserId();
-        String userEmail = customUserDetails.getUsername();
-
-        if (!plantService.isOwnerOfPlant(userId, plantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("식물에 대한 권한이 없습니다.");
-        }
-
-
-        try {
-            plantService.removePlant(plantId, userEmail);
-            logger.info("Plant deleted");
-            return ResponseEntity.ok(Map.of("ok", true));
-        } catch (Exception e) {
-            logger.error("Error delete plant: {}", e.getMessage());
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("삭제 중 에러가 발생했습니다.");
-        }
-
     }
 
 }

@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
-
     List<Report> findByReportedPlantIsNotNull();
     List<Report> findByReportedDiaryIsNotNull();
 }

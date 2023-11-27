@@ -33,7 +33,7 @@ public class SecurityConfig {
                 // 세션을 사용하지 않음
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 인증 요구 사항 설정
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/plants/add/{id:[\\d]+}", "/plants/my", "/plants/edit/{id:[\\d]+}", "/plants/remove/{id:[\\d]+}", "/plants/heart/{id:[\\d]+}", "/users/remove", "/users/refresh", "/diary/add", "/diary/remove/{id:[\\d]+}", "/diary/edit/{id:[\\d]+}").authenticated()
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/plants/add", "/plants/my", "/plants/edit/{id:[\\d]+}", "/plants/remove/{id:[\\d]+}", "/plants/heart/{id:[\\d]+}", "/diary/add", "/diary/remove/{id:[\\d]+}", "/diary/edit/{id:[\\d]+}", "/users/my-info", "/users/remove", "/users/my/hearted-plants", "/report/plant/{id:[\\d]+}", "/report/diary/{id:[\\d]+}").authenticated()
                         .anyRequest().permitAll()
 
                 );
