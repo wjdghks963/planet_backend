@@ -78,7 +78,7 @@ public class PlantController {
     }
 
 
-    @PostMapping("/remove/{id}")
+    @DeleteMapping("/remove/{id}")
     public ResponseEntity<?> deletePlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
         Long userId = customUserDetails.getUserId();
         String userEmail = customUserDetails.getUsername();

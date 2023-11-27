@@ -4,7 +4,6 @@ import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

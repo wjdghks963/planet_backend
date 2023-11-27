@@ -1,6 +1,5 @@
 package com.jung.planet.user.controller;
 
-import com.jung.planet.plant.dto.PlantSummaryDTO;
 import com.jung.planet.plant.repository.UserPlantHeartRepository;
 import com.jung.planet.plant.service.PlantService;
 import com.jung.planet.security.JwtTokenProvider;
