@@ -1,4 +1,4 @@
-![스크린샷 2023-11-29 오후 1 07 30](https://github.com/wjdghks963/planet_backend/assets/74060017/41211d34-680d-4e8a-bf02-288c6c3ecebe)# planet_backend
+# planet_backend
 
 
 ## 소개
