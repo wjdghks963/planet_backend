@@ -15,8 +15,8 @@ public interface UserPlantHeartRepository extends JpaRepository<UserPlantHeart, 
     // 사용자 ID를 기준으로 누른 하트의 총 개수를 반환
     int countByUserId(Long userId);
 
-
     Page<UserPlantHeart> findByUserId(Long userId, Pageable pageable);
 
+    void deleteByUserId(Long userId);
 
 }

@@ -4,6 +4,7 @@ package com.jung.planet.user.service;
 import com.jung.planet.admin.service.SlackNotificationService;
 
 import com.jung.planet.exception.UnauthorizedActionException;
+import com.jung.planet.plant.repository.UserPlantHeartRepository;
 import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
@@ -30,6 +31,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final CloudflareR2Uploader cloudflareR2Uploader;
+    private final UserPlantHeartRepository userPlantHeartRepository;
 
     private final SlackNotificationService slackNotificationService;
 
@@ -37,8 +39,7 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
 
-  
-   @Transactional
+    @Transactional
     public User adminUser(UserDTO userDTO) {
         Optional<User> user = userRepository.findByEmail(userDTO.getEmail());
 
@@ -68,7 +69,7 @@ public class UserService {
             Map<String, String> infoData = new HashMap<>();
             infoData.put("Email", newUser.getEmail());
 
-            slackNotificationService.sendSlackOkNotification("어드민 유저 생성 ",infoData);
+            slackNotificationService.sendSlackOkNotification("어드민 유저 생성 ", infoData);
 
             return newUser;
         } else {
@@ -80,8 +81,8 @@ public class UserService {
             return existingUser;
         }
     }
-  
-  
+
+
     @Transactional
     public User processUser(UserDTO userDTO) {
         Optional<User> user = userRepository.findByEmail(userDTO.getEmail());
@@ -120,11 +121,13 @@ public class UserService {
     }
 
 
+    @Transactional
     public void deleteUser(CustomUserDetails customUserDetails) {
         User userToDelete = userRepository.findById(customUserDetails.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (customUserDetails.getUserRole().equals(UserRole.ADMIN) || userToDelete != null) {
+            userPlantHeartRepository.deleteByUserId(customUserDetails.getUserId());
             userRepository.deleteById(customUserDetails.getUserId());
             cloudflareR2Uploader.deleteUser(userToDelete.getEmail());
         } else {
@@ -153,7 +156,7 @@ public class UserService {
         infoData.put("start date", subscription.getStartDate().toString());
         infoData.put("end date", subscription.getEndDate().toString());
 
-        slackNotificationService.sendSlackOkNotification("유저 구독 업그레이드",infoData);
+        slackNotificationService.sendSlackOkNotification("유저 구독 업그레이드", infoData);
         return user;
     }
 
