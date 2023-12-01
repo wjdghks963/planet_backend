@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
-    List<Report> findByEntityType(ReportType entityType);
-
+    List<Report> findByReportedPlantIsNotNull();
+    List<Report> findByReportedDiaryIsNotNull();
 }
 

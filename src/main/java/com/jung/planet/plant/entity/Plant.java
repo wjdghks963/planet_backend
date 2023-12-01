@@ -2,6 +2,7 @@ package com.jung.planet.plant.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jung.planet.diary.entity.Diary;
+import com.jung.planet.report.entity.Report;
 import com.jung.planet.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -46,6 +47,10 @@ public class Plant {
 
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserPlantHeart> hearts;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "reportedPlant", cascade = CascadeType.ALL)
+    private Set<Report> reports;
 
     public void setNickName(String nickName) {
         this.nickName = nickName;

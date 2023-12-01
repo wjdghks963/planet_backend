@@ -1,5 +1,7 @@
 package com.jung.planet.report.entity;
 
+import com.jung.planet.diary.entity.Diary;
+import com.jung.planet.plant.entity.Plant;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,9 +17,14 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long entityId;
 
-    private ReportType entityType;
+    @ManyToOne
+    @JoinColumn(name = "plant_id")
+    private Plant reportedPlant;
+
+    @ManyToOne
+    @JoinColumn(name = "diary_id")
+    private Diary reportedDiary;
 
     private Long reporterId;
 
