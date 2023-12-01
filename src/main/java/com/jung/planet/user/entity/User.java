@@ -54,6 +54,10 @@ public class User {
         this.role = role;
     }
 
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
+    }
+
     @Builder(toBuilder = true)
     public User(String email, String name, String refreshToken, Subscription subscription) {
         this.email = email;
