@@ -19,4 +19,6 @@ public interface UserPlantHeartRepository extends JpaRepository<UserPlantHeart, 
 
     void deleteByUserId(Long userId);
 
+    void deleteByPlantId(Long plantId);
+
 }

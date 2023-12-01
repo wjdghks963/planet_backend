@@ -20,7 +20,7 @@ public class UserPlantHeart {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @MapsId("plantId")
     @JoinColumn(name = "plant_id", nullable = false)
     private Plant plant;

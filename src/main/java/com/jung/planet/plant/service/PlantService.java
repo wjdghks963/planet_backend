@@ -81,6 +81,7 @@ public class PlantService {
         Plant plant = plantRepository.findById(plantId)
                 .orElseThrow(() -> new EntityNotFoundException("해당하는 식물을 찾을 수 없습니다."));
 
+        userPlantHeartRepository.deleteByPlantId(plantId);
         cloudflareR2Uploader.deletePlant(plantId, userEmail);
 
         plantRepository.delete(plant);
@@ -133,8 +134,6 @@ public class PlantService {
     }
 
 
-
-
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getRandomPlants() {
         List<Plant> randomPlants = plantRepository.findRandomPlants();
@@ -149,8 +148,6 @@ public class PlantService {
     }
 
 
-
-
     @Transactional(readOnly = true)
     public PlantDetailDTO getPlantDetailsByPlantId(Long userId, Long plantId) {
         Plant plant = plantRepository.findById(plantId).orElseThrow(() -> new EntityNotFoundException("식물을 찾을 수 없습니다."));
@@ -158,7 +155,6 @@ public class PlantService {
 
         return convertToDetailDto(userId, plant, isHearted);
     }
-
 
 
     public int getTotalHearts(Long userId) {
