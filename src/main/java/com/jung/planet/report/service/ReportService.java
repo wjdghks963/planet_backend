@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +39,8 @@ public class ReportService {
 
     public void reportEntity(Long entityId, ReportType entityType, Long reporterId) {
         Report report = new Report();
+        Optional<User> user = userRepository.findById(reporterId);
+
         if (entityType.equals(ReportType.PLANT)) {
             Plant plant = plantRepository.findById(entityId)
                     .orElseThrow(() -> new EntityNotFoundException("식물을 찾을 수 없습니다."));
@@ -47,6 +50,7 @@ public class ReportService {
             infoData.put("PLANT ID", plant.getId().toString());
             infoData.put("PLANT CONTENT", plant.getNickName());
             infoData.put("PLANT IMG_URL", plant.getImgUrl());
+            user.ifPresent(value -> infoData.put("REPORTER EMAIL", value.getEmail()));
             slackNotificationService.sendSlackReportNotification("식물 신고", infoData);
 
         } else if (entityType.equals(ReportType.DIARY)) {
@@ -58,6 +62,7 @@ public class ReportService {
             infoData.put("DIARY ID", diary.getId().toString());
             infoData.put("DIARY CONTENT", diary.getContent());
             infoData.put("DIARY IMG_URL", diary.getImgUrl());
+            user.ifPresent(value -> infoData.put("REPORTER EMAIL", value.getEmail()));
             slackNotificationService.sendSlackReportNotification("다이어리 신고", infoData);
         }
 
