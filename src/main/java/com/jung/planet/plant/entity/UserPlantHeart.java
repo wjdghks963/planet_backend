@@ -15,12 +15,12 @@ public class UserPlantHeart {
     @EmbeddedId
     private UserPlantHeartId id;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @MapsId("userId")
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @MapsId("plantId")
     @JoinColumn(name = "plant_id", nullable = false)
     private Plant plant;

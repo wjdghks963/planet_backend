@@ -51,13 +51,11 @@ public class UserPlantHeartService {
 
             // 변경된 plant 객체를 저장
             plantRepository.save(plant);
-            return userPlantHeart.isEmpty();
+            return true;
         } else {
             // 식물의 소유자인 경우, 토글을 거부하고 예외 처리 또는 적절한 응답 반환
             throw new UnauthorizedActionException("자신의 식물엔 좋아요를 누를 수 없습니다.");
         }
-
-
     }
 
 
