@@ -4,7 +4,6 @@ import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.dto.request.DiaryFormDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.diary.service.DiaryService;
-import com.jung.planet.plant.controller.PlantController;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
