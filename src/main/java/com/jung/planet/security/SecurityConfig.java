@@ -35,12 +35,10 @@ public class SecurityConfig {
                 // 인증 요구 사항 설정
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/plants/add", "/plants/my", "/plants/edit/{id:[\\d]+}", "/plants/remove/{id:[\\d]+}", "/plants/heart/{id:[\\d]+}").authenticated()
                         .requestMatchers("/diary/add", "/diary/remove/{id:[\\d]+}", "/diary/edit/{id:[\\d]+}").authenticated()
-                        .requestMatchers( "/users/my-info", "/users/remove", "/users/my/hearted-plants").authenticated()
+                        .requestMatchers("/users/my-info", "/users/remove", "/users/my/hearted-plants", "/users/request/grade-up").authenticated()
                         .requestMatchers("/report/plant/{id:[\\d]+}", "/report/diary/{id:[\\d]+}").authenticated()
                         .requestMatchers("/admin/upgrade").authenticated()
-
                         .anyRequest().permitAll()
-
                 );
 
 

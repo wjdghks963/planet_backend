@@ -11,6 +11,4 @@ public class PremiumUserDTO {
     private String email;
     private String name;
     private Subscription subscription;
-
-
 }
