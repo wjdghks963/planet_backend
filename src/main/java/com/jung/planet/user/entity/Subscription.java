@@ -50,7 +50,7 @@ public class Subscription {
 
     // 유효한 구독인지 확인하는 메소드
     public boolean isValidSubscription() {
-        if (this.type == SubscriptionType.BASIC) {
+        if (this.type == SubscriptionType.PREMIUM) {
             return true;
         }
         return this.startDate != null && this.endDate != null
