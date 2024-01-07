@@ -102,5 +102,17 @@ public class UserController {
         return ResponseEntity.ok(userInfo);
     }
 
+    @PostMapping("/request/grade-up")
+    public ResponseEntity<?> requestGradeUp(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("해당하는 유저를 찾을 수 없습니다."));
 
+        boolean isOk = userService.requestGradeUp(user);
+        if (isOk) {
+            return ResponseEntity.ok(Map.of("message", "신청 완료"));
+        } else {
+            return ResponseEntity.ok(Map.of("message", "이미 프리미엄 유저입니다."));
+
+        }
+    }
 }

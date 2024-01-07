@@ -9,10 +9,8 @@ import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.dto.UserDTO;
-import com.jung.planet.user.entity.Subscription;
-import com.jung.planet.user.entity.SubscriptionType;
-import com.jung.planet.user.entity.User;
-import com.jung.planet.user.entity.UserRole;
+import com.jung.planet.user.entity.*;
+import com.jung.planet.user.repository.GradeUpRequestRepository;
 import com.jung.planet.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +31,7 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final CloudflareR2Uploader cloudflareR2Uploader;
     private final UserPlantHeartRepository userPlantHeartRepository;
+    private final GradeUpRequestRepository gradeUpRequestRepository;
 
     private final SlackNotificationService slackNotificationService;
 
@@ -174,5 +174,25 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+
+    @Transactional
+    public boolean requestGradeUp(User user) {
+        if (user.getSubscription().getType() == SubscriptionType.BASIC) {
+            GradeUpRequest gradeUpRequest = new GradeUpRequest();
+            gradeUpRequest.setUser(user);
+            gradeUpRequest.setRequestTime(LocalDateTime.now());
+
+            gradeUpRequestRepository.save(gradeUpRequest);
+            Map<String, String> infoData = new HashMap<>();
+            infoData.put("Email", gradeUpRequest.getUser().getEmail());
+            infoData.put("Name", gradeUpRequest.getUser().getName());
+
+            slackNotificationService.sendSlackOkNotification("등급업 요청", infoData);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 }
