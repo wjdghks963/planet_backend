@@ -2,6 +2,7 @@ package com.jung.planet.admin.controller;
 
 
 import com.jung.planet.admin.dto.PremiumUserDTO;
+import com.jung.planet.admin.dto.RequestUserDTO;
 import com.jung.planet.admin.service.AdminService;
 import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
@@ -50,6 +51,12 @@ public class AdminController {
     @GetMapping("/subscriptions")
     public ResponseEntity<?> getAllPremiumUsers() {
         List<PremiumUserDTO> premiumUsers = adminService.getAllPremiumUsers();
+        return ResponseEntity.ok(premiumUsers);
+    }
+
+    @GetMapping("/request/grade-up")
+    public ResponseEntity<?> getAllGradeUpRequest(){
+        List<RequestUserDTO> premiumUsers = adminService.getAllGradeUpUsers();
         return ResponseEntity.ok(premiumUsers);
     }
 
