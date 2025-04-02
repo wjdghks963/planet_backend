@@ -1,7 +1,9 @@
 package com.jung.planet.diary.controller;
 
+import com.jung.planet.common.dto.ApiResponseDTO;
 import com.jung.planet.diary.dto.DiaryDetailDTO;
 import com.jung.planet.diary.dto.request.DiaryFormDTO;
+import com.jung.planet.diary.dto.response.DiaryResponseDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.diary.service.DiaryService;
 import com.jung.planet.plant.controller.PlantController;
@@ -16,11 +18,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @Tag(name = "Diary", description = "다이어리 관련 API")
 @RestController
@@ -40,11 +39,11 @@ public class DiaryController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<DiaryDetailDTO> findDiary(
+    public ApiResponseDTO<DiaryDetailDTO> findDiary(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @Parameter(description = "다이어리 ID") @PathVariable("id") Long diaryId) {
         DiaryDetailDTO diary = diaryService.findDiary(diaryId, customUserDetails.getUserId());
-        return ResponseEntity.ok(diary);
+        return ApiResponseDTO.success(diary);
     }
 
     @Operation(summary = "다이어리 작성", description = "새로운 다이어리를 작성합니다.")
@@ -55,14 +54,19 @@ public class DiaryController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/add")
-    public ResponseEntity<Map<String, Object>> addDiary(
+    public ApiResponseDTO<DiaryResponseDTO> addDiary(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @RequestBody DiaryFormDTO diaryFormDTO) {
         logger.info("Request to add diary: {}", diaryFormDTO.toString());
         Diary diary = diaryService.addDiary(customUserDetails.getUsername(), diaryFormDTO);
         logger.info("Diary added: {}", diary);
 
-        return ResponseEntity.ok(Map.of("ok", true));
+        DiaryResponseDTO responseDTO = DiaryResponseDTO.builder()
+                .diaryId(diary.getId())
+                .success(true)
+                .build();
+
+        return ApiResponseDTO.success(responseDTO, "다이어리가 성공적으로 추가되었습니다.");
     }
 
     @Operation(summary = "다이어리 수정", description = "기존 다이어리를 수정합니다.")
@@ -74,12 +78,18 @@ public class DiaryController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/edit/{id}")
-    public ResponseEntity<?> editDiary(
+    public ApiResponseDTO<DiaryResponseDTO> editDiary(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @Parameter(description = "다이어리 ID") @PathVariable("id") Long diaryId,
         @RequestBody DiaryFormDTO diaryEditDTO) {
         diaryService.editDiary(customUserDetails, diaryId, diaryEditDTO);
-        return ResponseEntity.ok(Map.of("ok", true));
+        
+        DiaryResponseDTO responseDTO = DiaryResponseDTO.builder()
+                .diaryId(diaryId)
+                .success(true)
+                .build();
+                
+        return ApiResponseDTO.success(responseDTO, "다이어리가 성공적으로 수정되었습니다.");
     }
 
     @Operation(summary = "다이어리 삭제", description = "기존 다이어리를 삭제합니다.")
@@ -91,10 +101,16 @@ public class DiaryController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @DeleteMapping("/remove/{id}")
-    public ResponseEntity<?> removeDiary(
+    public ApiResponseDTO<DiaryResponseDTO> removeDiary(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @Parameter(description = "다이어리 ID") @PathVariable("id") Long diaryId) {
         diaryService.deleteDiary(diaryId, customUserDetails);
-        return ResponseEntity.ok(Map.of("ok", true));
+        
+        DiaryResponseDTO responseDTO = DiaryResponseDTO.builder()
+                .diaryId(diaryId)
+                .success(true)
+                .build();
+                
+        return ApiResponseDTO.success(responseDTO, "다이어리가 성공적으로 삭제되었습니다.");
     }
 }

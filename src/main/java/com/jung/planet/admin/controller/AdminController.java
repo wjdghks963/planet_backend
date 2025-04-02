@@ -1,7 +1,9 @@
 package com.jung.planet.admin.controller;
 
 import com.jung.planet.admin.dto.PremiumUserDTO;
+import com.jung.planet.admin.dto.response.AdminResponseDTO;
 import com.jung.planet.admin.service.AdminService;
+import com.jung.planet.common.dto.ApiResponseDTO;
 import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.dto.JwtResponse;
@@ -17,7 +19,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -42,11 +43,12 @@ public class AdminController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/login")
-    public ResponseEntity<?> getAdminUser(@RequestBody UserDTO userDTO) {
+    public ApiResponseDTO<JwtResponse> getAdminUser(@RequestBody UserDTO userDTO) {
         User user = userService.adminUser(userDTO);
         String access_token = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole());
 
-        return ResponseEntity.ok(new JwtResponse(access_token, user.getRefreshToken(), user));
+        JwtResponse response = new JwtResponse(access_token, user.getRefreshToken(), user);
+        return ApiResponseDTO.success(response, "관리자 로그인이 성공적으로 완료되었습니다.");
     }
 
     @Operation(summary = "구독 업그레이드", description = "사용자의 구독을 프리미엄으로 업그레이드합니다.")
@@ -57,12 +59,18 @@ public class AdminController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/upgrade")
-    public ResponseEntity<?> upgradeSubscription(
+    public ApiResponseDTO<AdminResponseDTO> upgradeSubscription(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @RequestBody UserDTO userDTO) {
         if (customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
             User user = userService.upgradeUserSubscription(userDTO.getEmail());
-            return ResponseEntity.ok(user);
+            
+            AdminResponseDTO responseDTO = AdminResponseDTO.builder()
+                    .user(user)
+                    .message("사용자 구독이 성공적으로 업그레이드되었습니다.")
+                    .build();
+                    
+            return ApiResponseDTO.success(responseDTO);
         } else {
             throw new AccessDeniedException("권한이 없습니다.");
         }
@@ -75,8 +83,14 @@ public class AdminController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/subscriptions")
-    public ResponseEntity<?> getAllPremiumUsers() {
+    public ApiResponseDTO<AdminResponseDTO> getAllPremiumUsers() {
         List<PremiumUserDTO> premiumUsers = adminService.getAllPremiumUsers();
-        return ResponseEntity.ok(premiumUsers);
+        
+        AdminResponseDTO responseDTO = AdminResponseDTO.builder()
+                .premiumUsers(premiumUsers)
+                .message("프리미엄 사용자 목록을 성공적으로 조회했습니다.")
+                .build();
+                
+        return ApiResponseDTO.success(responseDTO);
     }
 }
