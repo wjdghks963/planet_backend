@@ -8,6 +8,13 @@ import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.service.PlantService;
 import com.jung.planet.security.UserDetail.CustomUserDetails;
 import com.jung.planet.user.entity.UserRole;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Plant", description = "식물 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/plants")
@@ -28,6 +36,12 @@ public class PlantController {
 
     private final PlantService plantService;
 
+    @Operation(summary = "식물 목록 조회", description = "모든 식물의 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "식물 목록 조회 성공",
+            content = @Content(schema = @Schema(implementation = PlantSummaryDTO.class))),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping
     public ResponseEntity<?> getPlants(@RequestParam(defaultValue = "recent") String type,
                                        @RequestParam(defaultValue = "0") int page,
@@ -42,7 +56,27 @@ public class PlantController {
         return ResponseEntity.ok(plants);
     }
 
+    @Operation(summary = "식물 상세 조회", description = "ID로 특정 식물의 상세 정보를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "식물 상세 조회 성공",
+            content = @Content(schema = @Schema(implementation = PlantDetailDTO.class))),
+        @ApiResponse(responseCode = "404", description = "식물을 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<PlantDetailDTO> getPlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
+        Long userId = customUserDetails != null ? customUserDetails.getUserId() : -1;
+        PlantDetailDTO plant = plantService.getPlantDetailsByPlantId(userId, plantId);
+        return ResponseEntity.ok(plant);
+    }
 
+    @Operation(summary = "식물 추가", description = "새로운 식물을 추가합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "식물 추가 성공",
+            content = @Content(schema = @Schema(implementation = Plant.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @PostMapping("/add")
     public ResponseEntity<?> addPlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody PlantFormDTO plantFormDTO) {
         logger.info("Request to add plant: {}", plantFormDTO);
@@ -77,7 +111,12 @@ public class PlantController {
         }
     }
 
-
+    @Operation(summary = "식물 삭제", description = "ID로 특정 식물을 삭제합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "식물 삭제 성공"),
+        @ApiResponse(responseCode = "403", description = "식물에 대한 권한이 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @DeleteMapping("/remove/{id}")
     public ResponseEntity<?> deletePlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
         Long userId = customUserDetails.getUserId();
@@ -92,9 +131,6 @@ public class PlantController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-
-
-
     @GetMapping("/my")
     public ResponseEntity<List<PlantSummaryDTO>> getPlants(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         Long userId = customUserDetails.getUserId();
@@ -103,18 +139,9 @@ public class PlantController {
         return ResponseEntity.ok(plants);
     }
 
-
     @GetMapping("/random")
     public ResponseEntity<List<PlantSummaryDTO>> getRandomPlants() {
         List<PlantSummaryDTO> randomPlants = plantService.getRandomPlants();
         return ResponseEntity.ok(randomPlants);
     }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<PlantDetailDTO> getPlant(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable("id") Long plantId) {
-        Long userId = customUserDetails != null ? customUserDetails.getUserId() : -1;
-        PlantDetailDTO plant = plantService.getPlantDetailsByPlantId(userId, plantId);
-        return ResponseEntity.ok(plant);
-    }
-
 }
