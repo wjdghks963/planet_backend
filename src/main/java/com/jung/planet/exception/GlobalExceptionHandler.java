@@ -1,6 +1,7 @@
 package com.jung.planet.exception;
 
 import com.jung.planet.admin.service.SlackNotificationService;
+import com.jung.planet.common.dto.ApiResponseDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import software.amazon.awssdk.core.exception.SdkClientException;
 
 import java.util.HashMap;
@@ -30,119 +32,67 @@ public class GlobalExceptionHandler {
 
     // EntityNotFoundException에 대한 처리
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<?> handleEntityNotFoundException(EntityNotFoundException e) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", HttpStatus.NOT_FOUND.getReasonPhrase());
-
-        Map<String, String> errors = new HashMap<>();
-        errors.put("message", e.getMessage());
-        body.put("errors", errors);
-
-
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponseDTO<Void> handleEntityNotFoundException(EntityNotFoundException e) {
+        return ApiResponseDTO.error(e.getMessage());
     }
-
 
     @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<Object> handleDatabaseException(DataAccessException e, HttpServletRequest request) {
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        responseBody.put("error", "Database Error");
-        responseBody.put("message", "서버 에러");
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResponseDTO<Void> handleDatabaseException(DataAccessException e, HttpServletRequest request) {
         slackNotificationService.sendSlackErrorNotification(e.getMessage(), request);
-
-        return new ResponseEntity<>(responseBody, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ApiResponseDTO.error("서버 에러가 발생했습니다.");
     }
 
-
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex) {
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("status", HttpStatus.FORBIDDEN.value());
-        responseBody.put("error", "Expired Refresh JWT");
-        responseBody.put("message", "Refresh JWT Token has expired");
-
-        return new ResponseEntity<>(responseBody, HttpStatus.FORBIDDEN);
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponseDTO<Void> handleExpiredJwtException(ExpiredJwtException ex) {
+        return ApiResponseDTO.error("Refresh JWT Token이 만료되었습니다.");
     }
 
     // MethodArgumentNotValidException에 대한 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException e) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponseDTO<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException e) {
         BindingResult result = e.getBindingResult();
         List<FieldError> fieldErrors = result.getFieldErrors();
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
-        body.put("errors", fieldErrors.stream()
-                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage)));
+        Map<String, String> errors = fieldErrors.stream()
+                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
 
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        // 타입 일치를 위해 Map<String, String>을 직접 data로 전달
+        return ApiResponseDTO.<Map<String, String>>builder()
+                .success(false)
+                .message("요청 데이터 검증에 실패했습니다.")
+                .data(errors)
+                .build();
     }
-
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
-
-        Map<String, String> errors = new HashMap<>();
-        errors.put("message", e.getMessage());
-        body.put("errors", errors);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponseDTO<Void> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
         slackNotificationService.sendSlackErrorNotification(e.getMessage(), request);
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        return ApiResponseDTO.error(e.getMessage());
     }
-
 
     @ExceptionHandler(UnauthorizedActionException.class)
-    public ResponseEntity<?> handleUnauthorizedActionException(UnauthorizedActionException e) {
-
-        Map<String, String> errors = new LinkedHashMap<>();
-        errors.put("message", e.getMessage());
-
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("status", HttpStatus.FORBIDDEN.value());
-        responseBody.put("error", "Unauthorized Action");
-
-        responseBody.put("errors", errors);
-
-        return new ResponseEntity<>(responseBody, HttpStatus.FORBIDDEN);
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponseDTO<Void> handleUnauthorizedActionException(UnauthorizedActionException e) {
+        return ApiResponseDTO.error(e.getMessage());
     }
-
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
-        Map<String, String> errors = new LinkedHashMap<>();
-        errors.put("message", e.getMessage());
-
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("status", HttpStatus.FORBIDDEN.value());
-        responseBody.put("error", "Access Denied");
-
-        responseBody.put("errors", errors);
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponseDTO<Void> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
         slackNotificationService.sendSlackErrorNotification(e.getMessage(), request);
-
-        return new ResponseEntity<>(responseBody, HttpStatus.FORBIDDEN);
+        return ApiResponseDTO.error(e.getMessage());
     }
-
 
     // SdkClientException에 대한 처리
     @ExceptionHandler(SdkClientException.class)
-    public ResponseEntity<?> handleSdkClientException(SdkClientException e, HttpServletRequest request) {
-        Map<String, String> errors = new LinkedHashMap<>();
-        errors.put("message", "AWS S3 서비스 오류: " + e.getMessage());
-
-        Map<String, Object> responseBody = new LinkedHashMap<>();
-        responseBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        responseBody.put("error", "Internal Server Error");
-        responseBody.put("errors", errors);
-
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResponseDTO<Void> handleSdkClientException(SdkClientException e, HttpServletRequest request) {
         slackNotificationService.sendSlackErrorNotification(e.getMessage(), request);
-
-        return new ResponseEntity<>(responseBody, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ApiResponseDTO.error("AWS S3 서비스 오류: " + e.getMessage());
     }
-
 }

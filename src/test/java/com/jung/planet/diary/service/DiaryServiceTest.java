@@ -2,14 +2,21 @@ package com.jung.planet.diary.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
-import com.jung.planet.diary.dto.DiaryDTO;
+import com.jung.planet.diary.dto.DiaryDetailDTO;
+import com.jung.planet.diary.dto.request.DiaryFormDTO;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.diary.repository.DiaryRepository;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
+import com.jung.planet.r2.CloudflareR2Uploader;
+import com.jung.planet.security.UserDetail.CustomUserDetails;
+import com.jung.planet.user.entity.User;
+import com.jung.planet.user.entity.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +25,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,114 +38,147 @@ public class DiaryServiceTest {
 
     @Mock
     private PlantRepository plantRepository;
+    
+    @Mock
+    private CloudflareR2Uploader cloudflareR2Uploader;
 
     @InjectMocks
     private DiaryService diaryService;
 
-    private DiaryDTO diaryDTO;
+    private DiaryFormDTO diaryFormDTO;
     private Plant plant;
     private Diary diary;
-
+    private User user;
+    private CustomUserDetails customUserDetails;
 
     @BeforeEach
     void setUp() {
-        // 가정된 Plant 객체를 생성합니다.
-        plant = new Plant(); // 실제로는 빌더 패턴이나 목 객체를 사용하여 생성합니다.
-
-        // DiaryDTO 객체를 생성합니다.
-        diaryDTO = new DiaryDTO();
-        diaryDTO.setPlantId(1L); // 예시 ID
-        diaryDTO.setTitle("My Green Buddy Diary");
-        diaryDTO.setContent("Today, my plant looks more lively than ever!");
-        diaryDTO.setImgUrl("plant.jpg");
-        diaryDTO.setIsPublic(true);
-
-        // Diary 객체를 빌더 패턴으로 생성합니다.
-        diary = Diary.builder()
-                .plant(plant)
-                .title(diaryDTO.getTitle())
-                .content(diaryDTO.getContent())
-                .imgUrl(diaryDTO.getImgUrl())
-                .isPublic(diaryDTO.getIsPublic())
-                .build();
+        // 테스트용 DiaryFormDTO 생성
+        diaryFormDTO = new DiaryFormDTO();
+        diaryFormDTO.setPlantId(1L);
+        diaryFormDTO.setContent("Today, my plant looks more lively than ever!");
+        diaryFormDTO.setImgData("base64EncodedImageData");
+        diaryFormDTO.setIsPublic(true);
+        diaryFormDTO.setCreatedAt(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
-
 
     // ADD
     @Test
-    void whenAddDiary_withValidPlantId_thenDiaryShouldBeSaved() {
-        // PlantRepository가 특정 ID로 Plant를 찾을 때, 가정된 Plant 객체를 반환하도록 설정합니다.
-        when(plantRepository.findById(diaryDTO.getPlantId())).thenReturn(Optional.of(plant));
-
-        // DiaryRepository의 save 메소드가 호출될 때, 가정된 Diary 객체를 반환하도록 설정합니다.
+    void testAddDiary_Success() {
+        // Given
+        String userName = "test@example.com";
+        plant = mock(Plant.class);
+        diary = mock(Diary.class);
+        
+        when(plantRepository.findById(eq(1L))).thenReturn(Optional.of(plant));
         when(diaryRepository.save(any(Diary.class))).thenReturn(diary);
-
-        // 실제 서비스 메소드를 호출합니다.
-        Diary savedDiary = diaryService.addDiary(diaryDTO);
-
-        // 검증: 생성된 Diary 객체가 null이 아닌지 확인합니다.
-        assertNotNull(savedDiary);
-
-        // 검증: 반환된 Diary 객체가 예상된 Diary 객체와 동일한지 확인합니다.
-        assertEquals(diary.getTitle(), savedDiary.getTitle());
-        assertEquals(diary.getContent(), savedDiary.getContent());
-        assertEquals(diary.getImgUrl(), savedDiary.getImgUrl());
-        assertEquals(diary.getIsPublic(), savedDiary.getIsPublic());
-
-        // 검증: DiaryRepository의 save 메소드가 실제로 호출되었는지 확인합니다.
-        verify(diaryRepository).save(any(Diary.class));
+        doNothing().when(cloudflareR2Uploader).uploadDiaryImage(anyString(), any(Diary.class), any(ByteBuffer.class));
+        
+        when(diary.getContent()).thenReturn(diaryFormDTO.getContent());
+        
+        // When
+        Diary result = diaryService.addDiary(userName, diaryFormDTO);
+        
+        // Then
+        assertNotNull(result);
+        assertEquals(diaryFormDTO.getContent(), result.getContent());
+        verify(plantRepository).findById(eq(1L));
+        verify(diaryRepository, times(2)).save(any(Diary.class));
+        verify(cloudflareR2Uploader).uploadDiaryImage(eq(userName), any(Diary.class), any(ByteBuffer.class));
     }
 
     @Test
-    void whenAddDiary_withInvalidPlantId_thenThrowException() {
-        // PlantRepository가 특정 ID로 Plant를 찾을 때, 빈 Optional을 반환하도록 설정합니다.
-        when(plantRepository.findById(diaryDTO.getPlantId())).thenReturn(Optional.empty());
-
-        // 예외가 발생하는지 확인합니다.
-        assertThrows(RuntimeException.class, () -> diaryService.addDiary(diaryDTO));
+    void testAddDiary_PlantNotFound() {
+        // Given
+        String userName = "test@example.com";
+        when(plantRepository.findById(eq(1L))).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThrows(EntityNotFoundException.class, () -> diaryService.addDiary(userName, diaryFormDTO));
+        verify(plantRepository).findById(eq(1L));
+        verify(diaryRepository, never()).save(any(Diary.class));
     }
-
 
     // FIND
     @Test
-    void whenFindDiaryById_thenDiaryShouldBeFound() {
-        // DiaryRepository가 특정 ID로 Diary를 찾을 때, 미리 정의된 Diary 객체를 반환하도록 설정
-        when(diaryRepository.findById(diary.getId())).thenReturn(Optional.of(diary));
-
-        // 실제 서비스 메소드를 호출
-        Diary foundDiary = diaryService.findDiary(diary.getId());
-
-        // 검증: 반환된 Diary 객체가 null이 아닌지 확인
-        assertNotNull(foundDiary);
-
-        // 검증: 반환된 Diary 객체가 예상된 Diary 객체와 동일한지 확인
-        assertEquals(diary, foundDiary);
+    void testFindDiary_Success() {
+        // Given
+        Long diaryId = 1L;
+        Long userId = 1L;
+        diary = mock(Diary.class);
+        plant = mock(Plant.class);
+        user = mock(User.class);
+        
+        when(diaryRepository.findById(eq(diaryId))).thenReturn(Optional.of(diary));
+        when(diary.getPlant()).thenReturn(plant);
+        when(plant.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn(userId);
+        when(diary.getId()).thenReturn(diaryId);
+        when(diary.getContent()).thenReturn(diaryFormDTO.getContent());
+        when(diary.getImgUrl()).thenReturn("http://example.com/image.jpg");
+        when(diary.getIsPublic()).thenReturn(true);
+        when(diary.getCreatedAt()).thenReturn(LocalDateTime.now());
+        
+        // When
+        DiaryDetailDTO result = diaryService.findDiary(diaryId, userId);
+        
+        // Then
+        assertNotNull(result);
+        assertEquals(diaryId, result.getId());
+        assertEquals(diary.getContent(), result.getContent());
+        assertEquals(diary.getImgUrl(), result.getImgUrl());
+        assertEquals(diary.getIsPublic(), result.isPublic());
+        assertTrue(result.isMine()); // 같은 사용자 ID이므로 true
     }
-
+    
+    @Test
+    void testFindDiary_DiaryNotFound() {
+        // Given
+        Long diaryId = 99L;
+        Long userId = 1L;
+        when(diaryRepository.findById(eq(diaryId))).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThrows(EntityNotFoundException.class, () -> diaryService.findDiary(diaryId, userId));
+    }
 
     // DELETE
     @Test
-    void deleteDiary_whenDiaryExists_shouldDeleteDiary() {
-        // Arrange
+    void testDeleteDiary_AsOwner_Success() {
+        // Given
         Long diaryId = 1L;
-        when(diaryRepository.existsById(diaryId)).thenReturn(true);
-
-        // Act
-        diaryService.deleteDiary(diaryId);
-
-        // Assert
-        verify(diaryRepository).deleteById(diaryId);
+        diary = mock(Diary.class);
+        plant = mock(Plant.class);
+        user = mock(User.class);
+        customUserDetails = mock(CustomUserDetails.class);
+        
+        when(diaryRepository.findById(eq(diaryId))).thenReturn(Optional.of(diary));
+        when(diary.getPlant()).thenReturn(plant);
+        when(plant.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn(1L);
+        when(customUserDetails.getUserId()).thenReturn(1L);
+        when(customUserDetails.getUsername()).thenReturn("test@example.com");
+        when(customUserDetails.getUserRole()).thenReturn(UserRole.NORMAL);
+        doNothing().when(diaryRepository).deleteById(eq(diaryId));
+        doNothing().when(cloudflareR2Uploader).deleteDiary(eq(diary), eq("test@example.com"));
+        
+        // When
+        diaryService.deleteDiary(diaryId, customUserDetails);
+        
+        // Then
+        verify(diaryRepository).deleteById(eq(diaryId));
+        verify(cloudflareR2Uploader).deleteDiary(eq(diary), eq("test@example.com"));
     }
-
-
+    
     @Test
-    void deleteDiary_whenDiaryDoesNotExist_shouldThrowException() {
-        // Arrange
+    void testDeleteDiary_DiaryNotFound() {
+        // Given
         Long diaryId = 99L;
-        when(diaryRepository.existsById(diaryId)).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> diaryService.deleteDiary(diaryId));
+        customUserDetails = mock(CustomUserDetails.class);
+        when(diaryRepository.findById(eq(diaryId))).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThrows(EntityNotFoundException.class, () -> diaryService.deleteDiary(diaryId, customUserDetails));
+        verify(diaryRepository, never()).deleteById(anyLong());
     }
-
 }

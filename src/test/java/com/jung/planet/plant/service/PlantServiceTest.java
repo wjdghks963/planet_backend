@@ -3,83 +3,89 @@ package com.jung.planet.plant.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.jung.planet.plant.dto.PlantDTO;
+import com.jung.planet.plant.dto.request.PlantFormDTO;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.repository.PlantRepository;
+import com.jung.planet.r2.CloudflareR2Uploader;
 import com.jung.planet.user.entity.User;
+import com.jung.planet.user.entity.UserRole;
 import com.jung.planet.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
-@SpringBootTest
-@Transactional
-public class PlantServiceTest {
+@ExtendWith(MockitoExtension.class)
+class PlantServiceTest {
 
-    @MockBean
+    @Mock
     private PlantRepository plantRepository;
 
-    @MockBean
+    @Mock
     private UserRepository userRepository;
+    
+    @Mock
+    private CloudflareR2Uploader cloudflareR2Uploader;
 
-    @Autowired
+    @InjectMocks
     private PlantService plantService;
 
-    private PlantDTO plantDTO;
-    private User user;
-    private Plant plant;
+    private PlantFormDTO plantFormDTO;
 
     @BeforeEach
     void setUp() {
-        // User
-        user = User.builder().email("example@example.com").name("USUS").build();
-
-        // PlantDTO
-        plantDTO = new PlantDTO();
-        plantDTO.setUserId(user.getId());
-        plantDTO.setNickName("Green Plant");
-        plantDTO.setScientificName("Plantae Greenus");
-        plantDTO.setImgUrl("");
-
-        // Plant
-        plant = Plant.builder().nickName(plantDTO.getNickName()).scientificName(plantDTO.getScientificName()).imgUrl(plantDTO.getImgUrl()).user(user).build();
-
+        // 테스트용 PlantFormDTO 생성
+        plantFormDTO = new PlantFormDTO();
+        plantFormDTO.setUserId(1L);
+        plantFormDTO.setNickName("Green Plant");
+        plantFormDTO.setScientificName("Plantae Greenus");
+        plantFormDTO.setImgData("base64EncodedImageData");
     }
-
+    
     @Test
-    void whenAddPlant_withValidUserId_thenPlantShouldBeSaved() {
-        // UserRepository가 특정 ID로 User를 찾을 때, 미리 정의된 User 객체를 반환
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
-
-        // PlantRepository의 save 메소드가 호출될 때, 미리 정의된 Plant 객체를 반환
+    void testAddPlant_Success() {
+        // Given
+        User user = mock(User.class);
+        Plant plant = mock(Plant.class);
+        
+        when(userRepository.findById(eq(1L))).thenReturn(Optional.of(user));
         when(plantRepository.save(any(Plant.class))).thenReturn(plant);
-
-        // 실제 서비스 메소드를 호출합니다.
-        Plant savedPlant = plantService.addPlant(plantDTO);
-
-        // 검증: 생성된 Plant 객체가 null이 아닌지 확인
-        assertNotNull(savedPlant);
-
-        // 검증: 반환된 Plant 객체가 예상된 Plant 객체와 동일한지 확인
-        assertEquals(plant, savedPlant);
-
-        // 검증: PlantRepository의 save 메소드가 실제로 호출되었는지 확인
-        verify(plantRepository).save(any(Plant.class));
+        doNothing().when(cloudflareR2Uploader).uploadPlantImage(any(User.class), any(Plant.class), any(ByteBuffer.class));
+        
+        when(plant.getNickName()).thenReturn(plantFormDTO.getNickName());
+        when(plant.getScientificName()).thenReturn(plantFormDTO.getScientificName());
+        
+        // When
+        Plant result = plantService.addPlant(plantFormDTO);
+        
+        // Then
+        assertNotNull(result);
+        assertEquals(plantFormDTO.getNickName(), result.getNickName());
+        assertEquals(plantFormDTO.getScientificName(), result.getScientificName());
+        
+        verify(userRepository).findById(eq(1L));
+        verify(plantRepository, times(2)).save(any(Plant.class));
+        verify(cloudflareR2Uploader).uploadPlantImage(eq(user), any(Plant.class), any(ByteBuffer.class));
     }
-
+    
     @Test
-    void whenAddPlant_withInvalidUserId_thenThrowException() {
-        // UserRepository가 특정 ID로 User를 찾을 때, 빈 Optional을 반환하도록 설정
-        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
-
-        // 예외가 발생하는지 확인합니다.
-        assertThrows(RuntimeException.class, () -> {
-            plantService.addPlant(plantDTO);
-        });
+    void testAddPlant_UserNotFound() {
+        // Given
+        when(userRepository.findById(eq(1L))).thenReturn(Optional.empty());
+        
+        // When & Then
+        assertThrows(EntityNotFoundException.class, () -> plantService.addPlant(plantFormDTO));
+        
+        verify(userRepository).findById(eq(1L));
+        verify(plantRepository, never()).save(any(Plant.class));
+        verify(cloudflareR2Uploader, never()).uploadPlantImage(any(User.class), any(Plant.class), any(ByteBuffer.class));
     }
 }
