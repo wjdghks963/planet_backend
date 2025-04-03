@@ -3,6 +3,7 @@ package com.jung.planet.user.service;
 import com.jung.planet.security.JwtTokenProvider;
 import com.jung.planet.user.dto.UserDTO;
 import com.jung.planet.user.entity.User;
+import com.jung.planet.user.entity.UserRole;
 import com.jung.planet.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +41,7 @@ public class UserServiceTest {
         userDTO.setEmail("newuser@example.com");
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-        when(jwtTokenProvider.createRefreshToken(anyLong(), anyString())).thenReturn("mockRefreshToken");
+        when(jwtTokenProvider.createRefreshToken(anyLong(), anyString(), any(UserRole.class))).thenReturn("mockRefreshToken");
 
         // When
         User result = userService.processUser(userDTO);
@@ -61,7 +62,7 @@ public class UserServiceTest {
         userDTO.setName("Existing User");
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(existingUser));
-        when(jwtTokenProvider.createRefreshToken(anyLong(), anyString())).thenReturn("mockRefreshToken");
+        when(jwtTokenProvider.createRefreshToken(anyLong(), anyString(), any(UserRole.class))).thenReturn("mockRefreshToken");
 
         // When
         User result = userService.processUser(userDTO);
