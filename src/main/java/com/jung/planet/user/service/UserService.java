@@ -121,13 +121,10 @@ public class UserService {
         User userToDelete = userRepository.findById(customUserDetails.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        if (customUserDetails.getUserRole().equals(UserRole.ADMIN) || userToDelete != null) {
-            userPlantHeartRepository.deleteByUserId(customUserDetails.getUserId());
-            userRepository.deleteById(customUserDetails.getUserId());
-            cloudflareR2Uploader.deleteUser(userToDelete.getEmail());
-        } else {
-            throw new UnauthorizedActionException("삭제 권한이 없습니다.");
-        }
+        // 사용자는 자신의 계정을 삭제할 수 있음 (Admin이 아니어도 가능)
+        userPlantHeartRepository.deleteByUserId(customUserDetails.getUserId());
+        userRepository.deleteById(customUserDetails.getUserId());
+        cloudflareR2Uploader.deleteUser(userToDelete.getEmail());
     }
 
     @Transactional

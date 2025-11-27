@@ -1,6 +1,7 @@
 package com.jung.planet.plant.controller;
 
 import com.jung.planet.common.dto.ApiResponseDTO;
+import com.jung.planet.common.service.AuthorizationService;
 import com.jung.planet.exception.ErrorMessages;
 import com.jung.planet.exception.PermissionDeniedException;
 import com.jung.planet.exception.UnauthorizedActionException;
@@ -38,6 +39,7 @@ public class PlantController {
     private static final Logger logger = LoggerFactory.getLogger(PlantController.class);
 
     private final PlantService plantService;
+    private final AuthorizationService authorizationService;
 
     @Operation(summary = "식물 목록 조회", description = "모든 식물의 목록을 조회합니다.")
     @ApiResponses({
@@ -137,7 +139,7 @@ public class PlantController {
         logger.debug("userId :: {}", userId);
 
         // 식물 소유권 확인
-        if (!plantService.isOwnerOfPlant(userId, plantId)) {
+        if (!authorizationService.isOwnerOfPlant(userId, plantId)) {
             throw new PermissionDeniedException("Plant", plantId);
         }
 
@@ -169,7 +171,7 @@ public class PlantController {
         Long userId = customUserDetails.getUserId();
         String userEmail = customUserDetails.getUsername();
 
-        if (!plantService.isOwnerOfPlant(userId, plantId) && !customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
+        if (!authorizationService.isOwnerOfPlant(userId, plantId) && !customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
             throw new UnauthorizedActionException(ErrorMessages.PLANT_PERMISSION_DENIED);
         }
 

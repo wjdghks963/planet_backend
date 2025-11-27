@@ -39,8 +39,15 @@ public class CloudflareR2Uploader {
 
 
     @Autowired
-    public CloudflareR2Uploader(CloudFlarePurgeCache cloudFlarePurgeCache, @Value("${cloudflareR2.access_id}") String access_id, @Value("${cloudflareR2.secret_key}") String secret_key, @Value("${cloudflareR2.end_point}") String end_point, @Value("${cloudflareR2.storage_point}") String storage_point, @Value("${cloudflareR2.bucket_name}") String bucket_name) {
-        this.cloudFlareR2Utils = new CloudFlareR2Utils();
+    public CloudflareR2Uploader(
+            CloudFlareR2Utils cloudFlareR2Utils,
+            CloudFlarePurgeCache cloudFlarePurgeCache,
+            @Value("${cloudflareR2.access_id}") String access_id,
+            @Value("${cloudflareR2.secret_key}") String secret_key,
+            @Value("${cloudflareR2.end_point}") String end_point,
+            @Value("${cloudflareR2.storage_point}") String storage_point,
+            @Value("${cloudflareR2.bucket_name}") String bucket_name) {
+        this.cloudFlareR2Utils = cloudFlareR2Utils;
         this.bucketName = bucket_name;
         this.endPointUri = end_point;
         this.storagePointUri = storage_point;
