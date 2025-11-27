@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PlantService {
+    private static final int DEFAULT_PAGE_SIZE = 4;
+
     private final PlantRepository plantRepository;
     private final UserRepository userRepository;
     private final UserPlantHeartRepository userPlantHeartRepository;
@@ -118,7 +120,7 @@ public class PlantService {
 
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getPlantsByRecent(int page) {
-        Pageable pageable = PageRequest.of(page, 4, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by("createdAt").descending());
         Page<Plant> plantPage = plantRepository.findAllByOrderByCreatedAtDesc(pageable);
         if (plantPage.isEmpty()) {
             return Collections.emptyList();
@@ -130,7 +132,7 @@ public class PlantService {
 
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getPlantsByPopularity(int page) {
-        Pageable pageable = PageRequest.of(page, 4, Sort.by("heartCount").descending());
+        Pageable pageable = PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by("heartCount").descending());
         Page<Plant> plantPage = plantRepository.findAll(pageable);
 
         if (plantPage.isEmpty()) {
@@ -144,7 +146,7 @@ public class PlantService {
 
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getHeartedPlantsByUser(Long userId, int page) {
-        Pageable pageable = PageRequest.of(page, 4);
+        Pageable pageable = PageRequest.of(page, DEFAULT_PAGE_SIZE);
         Page<UserPlantHeart> hearts = userPlantHeartRepository.findByUserId(userId, pageable);
 
         return hearts.stream()

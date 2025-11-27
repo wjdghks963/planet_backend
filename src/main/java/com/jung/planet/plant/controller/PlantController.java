@@ -125,7 +125,7 @@ public class PlantController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류",
             content = @Content(schema = @Schema(implementation = ApiResponseDTO.class)))
     })
-    @PostMapping("/edit/{id}")
+    @PutMapping("/{id}")
     public ApiResponseDTO<PlantResponseDTO> editPlant(
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails customUserDetails,

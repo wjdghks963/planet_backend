@@ -77,7 +77,7 @@ public class DiaryController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @PostMapping("/edit/{id}")
+    @PutMapping("/{id}")
     public ApiResponseDTO<DiaryResponseDTO> editDiary(
         @Parameter(description = "인증된 사용자 정보") @AuthenticationPrincipal CustomUserDetails customUserDetails,
         @Parameter(description = "다이어리 ID") @PathVariable("id") Long diaryId,
