@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Component
-public class CloudFlareR2Utils {
+public class CloudflareR2Utils {
 
     /**
      * 이미지 버퍼의 SHA-256 해시값을 계산합니다.

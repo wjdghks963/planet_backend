@@ -18,6 +18,7 @@ import com.jung.planet.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ public class ReportService {
     private final DiaryService diaryService;
     private final SlackNotificationService slackNotificationService;
 
+    @Transactional
     public void reportEntity(Long entityId, ReportType entityType, Long reporterId) {
         Report report = new Report();
         if (entityType.equals(ReportType.PLANT)) {
@@ -66,26 +68,27 @@ public class ReportService {
         reportRepository.save(report);
     }
 
-
+    @Transactional(readOnly = true)
     public List<ReportDTO> getAllDiaryReports() {
-        return reportRepository.findByReportedDiaryIsNotNull().stream()
+        return reportRepository.findAllDiaryReportsWithUser().stream()
                 .map(this::convertToDiaryReportDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ReportDTO> getAllPlantReports() {
-        return reportRepository.findByReportedPlantIsNotNull().stream()
+        return reportRepository.findAllPlantReportsWithUser().stream()
                 .map(this::convertToPlantReportDTO)
                 .collect(Collectors.toList());
     }
 
 
     private ReportDTO convertToDiaryReportDTO(Report report) {
-        Diary diary = diaryRepository.findById(report.getId()).orElseThrow(() -> new EntityNotFoundException("다이어리 데이터를 찾을 수 없습니다."));
+        Diary diary = report.getReportedDiary();
         DiaryDetailDTO diaryDetailDTO = diaryService.findDiary(diary.getId(), 0L);
-        User reporter = userRepository.findById(report.getReporterId()).orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
-        User diaryOwner = userRepository.findById(diary.getPlant().getUser().getId()).orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
-
+        User reporter = userRepository.findById(report.getReporterId())
+                .orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
+        User diaryOwner = diary.getPlant().getUser();
 
         return ReportDTO.builder()
                 .reportId(report.getId())
@@ -96,17 +99,18 @@ public class ReportService {
     }
 
     private ReportDTO convertToPlantReportDTO(Report report) {
-        Plant plant = plantRepository.findById(report.getId()).orElseThrow(() -> new EntityNotFoundException("식물 데이터를 찾을 수 없습니다."));
+        Plant plant = report.getReportedPlant();
         PlantDetailDTO plantDetailDTO = plantService.getPlantDetailsByPlantId(0L, plant.getId());
-        User reporter = userRepository.findById(report.getReporterId()).orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
-        User plantOwner = userRepository.findById(plant.getUser().getId()).orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
+        User reporter = userRepository.findById(report.getReporterId())
+                .orElseThrow(() -> new EntityNotFoundException("유저 정보 없음"));
+        User plantOwner = plant.getUser();
 
-
-        return ReportDTO.builder().reportId(report.getId())
+        return ReportDTO.builder()
+                .reportId(report.getId())
                 .reporterId(reporter.getEmail())
                 .entityOwnerId(plantOwner.getEmail())
-                .plantDetails(plantDetailDTO).build();
-
+                .plantDetails(plantDetailDTO)
+                .build();
     }
 
 

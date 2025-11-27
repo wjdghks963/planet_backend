@@ -9,14 +9,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 @Component
-public class CloudFlarePurgeCache {
+public class CloudflarePurgeCache {
 
     private final String cloudflareXAuthEmail;
     private final String cloudflareXAuthKey;
 
     private final String purgeEndpoint;
 
-    public CloudFlarePurgeCache(@Value("${cloudflareR2.email}") String cloudflareXAuthEmail, @Value("${cloudflareR2.global_api_key}") String cloudflareXAuthKey, @Value("${cloudflareR2.zone_id}") String zoneId) {
+    public CloudflarePurgeCache(@Value("${cloudflareR2.email}") String cloudflareXAuthEmail, @Value("${cloudflareR2.global_api_key}") String cloudflareXAuthKey, @Value("${cloudflareR2.zone_id}") String zoneId) {
         this.cloudflareXAuthEmail = cloudflareXAuthEmail;
         this.cloudflareXAuthKey = cloudflareXAuthKey;
         this.purgeEndpoint = "https://api.cloudflare.com/client/v4/zones/" + zoneId + "/purge_cache";

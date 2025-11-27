@@ -28,8 +28,8 @@ public class CloudflareR2Uploader {
     private static final Logger logger = LoggerFactory.getLogger(CloudflareR2Uploader.class);
 
 
-    private final CloudFlareR2Utils cloudFlareR2Utils;
-    private final CloudFlarePurgeCache cloudFlarePurgeCache;
+    private final CloudflareR2Utils cloudflareR2Utils;
+    private final CloudflarePurgeCache cloudflarePurgeCache;
 
     private final S3Client s3Client;
 
@@ -40,18 +40,18 @@ public class CloudflareR2Uploader {
 
     @Autowired
     public CloudflareR2Uploader(
-            CloudFlareR2Utils cloudFlareR2Utils,
-            CloudFlarePurgeCache cloudFlarePurgeCache,
+            CloudflareR2Utils cloudflareR2Utils,
+            CloudflarePurgeCache cloudflarePurgeCache,
             @Value("${cloudflareR2.access_id}") String access_id,
             @Value("${cloudflareR2.secret_key}") String secret_key,
             @Value("${cloudflareR2.end_point}") String end_point,
             @Value("${cloudflareR2.storage_point}") String storage_point,
             @Value("${cloudflareR2.bucket_name}") String bucket_name) {
-        this.cloudFlareR2Utils = cloudFlareR2Utils;
+        this.cloudflareR2Utils = cloudflareR2Utils;
         this.bucketName = bucket_name;
         this.endPointUri = end_point;
         this.storagePointUri = storage_point;
-        this.cloudFlarePurgeCache = cloudFlarePurgeCache;
+        this.cloudflarePurgeCache = cloudflarePurgeCache;
 
 
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(access_id, secret_key);
@@ -64,7 +64,7 @@ public class CloudflareR2Uploader {
     }
 
     public void uploadPlantImage(User user, Plant plant, ByteBuffer imageBuffer) {
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String imageType = "thumbnail";
         String filePath = user.getEmail() + "/" + plant.getId()
@@ -83,7 +83,7 @@ public class CloudflareR2Uploader {
         String fileName = storagePointUri + filePath;
 
 
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String existingImageHash = retrieveImageHashFromR2(filePath);
 
@@ -93,7 +93,7 @@ public class CloudflareR2Uploader {
 
             // 이미지 다르면 캐시 삭제
             uploadPlantImage(user, plant, imageBuffer);
-            cloudFlarePurgeCache.purgeCache(fileName);
+            cloudflarePurgeCache.purgeCache(fileName);
 
         }
     }
@@ -128,7 +128,7 @@ public class CloudflareR2Uploader {
 
     // Diary
     public void uploadDiaryImage(String userEmail, Diary diary, ByteBuffer imageBuffer) {
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
         Plant plant = diary.getPlant();
 
         String imageType = "diary";
@@ -154,7 +154,7 @@ public class CloudflareR2Uploader {
         String fileName = storagePointUri + filePath;
 
 
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String existingImageHash = retrieveImageHashFromR2(filePath);
 
@@ -162,7 +162,7 @@ public class CloudflareR2Uploader {
         if (!imageHash.equals(existingImageHash)) {
             // 이미지 다르면 캐시 삭제
             uploadDiaryImage(userEmail, diary, imageBuffer);
-            cloudFlarePurgeCache.purgeCache(fileName);
+            cloudflarePurgeCache.purgeCache(fileName);
 
         }
     }
