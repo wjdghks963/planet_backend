@@ -92,7 +92,7 @@ public class UserService {
                 .subscription(subscription)
                 .build();
 
-        subscription.setUser(newUser);
+        subscription.assignUser(newUser);
         newUser.assignRole(userRole);
 
         String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail(), newUser.getRole());
@@ -134,9 +134,7 @@ public class UserService {
 
         SubscriptionType subscriptionType = SubscriptionType.PREMIUM;
         Subscription subscription = user.getSubscription();
-        subscription.setType(subscriptionType);
-        subscription.setMaxPlants(subscriptionType.getMaxPlants());
-        subscription.setAiServiceAccess(subscriptionType.isAiServiceAccess());
+        subscription.upgradeToType(subscriptionType);
         subscription.startSubscription();
 
         user.attachSubscription(subscription);

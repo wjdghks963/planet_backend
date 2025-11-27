@@ -8,7 +8,7 @@ import java.util.List;
 
 
 @Getter
-@Setter
+@Builder
 public class PlantDetailDTO {
 
     private Long plantId;
