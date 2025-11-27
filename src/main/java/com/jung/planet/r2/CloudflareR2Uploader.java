@@ -1,6 +1,7 @@
 package com.jung.planet.r2;
 
 import com.jung.planet.diary.entity.Diary;
+import com.jung.planet.exception.ExternalServiceException;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
 import lombok.Getter;
@@ -112,8 +113,8 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete plant files. plantId: {}, userEmail: {}", plantId, userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "식물 파일 삭제", e);
         }
     }
 
@@ -177,8 +178,8 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete diary file. diaryId: {}, userEmail: {}", diary.getId(), userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "일기 파일 삭제", e);
         }
     }
 
@@ -204,8 +205,8 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete user files. userEmail: {}", userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "사용자 파일 삭제", e);
         }
     }
 
@@ -231,7 +232,8 @@ public class CloudflareR2Uploader {
 
             return response.metadata().get("image-hash");
         } catch (S3Exception e) {
-            throw new RuntimeException("Failed to retrieve image hash from R2", e);
+            logger.error("Failed to retrieve image hash from R2. filePath: {}", filePath, e);
+            throw new ExternalServiceException("Cloudflare R2", "이미지 해시 조회", e);
         }
     }
 }
