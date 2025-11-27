@@ -39,11 +39,16 @@ public class ReportService {
 
     @Transactional
     public void reportEntity(Long entityId, ReportType entityType, Long reporterId) {
-        Report report = new Report();
+        Report report;
+
         if (entityType.equals(ReportType.PLANT)) {
             Plant plant = plantRepository.findById(entityId)
                     .orElseThrow(() -> new EntityNotFoundException("식물을 찾을 수 없습니다."));
-            report.setReportedPlant(plant);
+
+            report = Report.builder()
+                    .reportedPlant(plant)
+                    .reporterId(reporterId)
+                    .build();
 
             Map<String, String> infoData = new HashMap<>();
             infoData.put("PLANT ID", plant.getId().toString());
@@ -54,16 +59,20 @@ public class ReportService {
         } else if (entityType.equals(ReportType.DIARY)) {
             Diary diary = diaryRepository.findById(entityId)
                     .orElseThrow(() -> new EntityNotFoundException("일지를 찾을 수 없습니다."));
-            report.setReportedDiary(diary);
+
+            report = Report.builder()
+                    .reportedDiary(diary)
+                    .reporterId(reporterId)
+                    .build();
 
             Map<String, String> infoData = new HashMap<>();
             infoData.put("DIARY ID", diary.getId().toString());
             infoData.put("DIARY CONTENT", diary.getContent());
             infoData.put("DIARY IMG_URL", diary.getImgUrl());
             slackNotificationService.sendSlackReportNotification("다이어리 신고", infoData);
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 신고 유형입니다.");
         }
-
-        report.setReporterId(reporterId);
 
         reportRepository.save(report);
     }

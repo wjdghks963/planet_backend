@@ -84,8 +84,7 @@ public class PlantService {
             throw new ExternalServiceException("이미지 업로드 서비스", "식물 이미지 수정", e);
         }
 
-        plant.setNickName(plantFormDTO.getNickName());
-        plant.setScientificName(plantFormDTO.getScientificName());
+        plant.updatePlantInfo(plantFormDTO.getNickName(), plantFormDTO.getScientificName());
 
         return plantRepository.save(plant);
     }

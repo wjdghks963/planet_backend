@@ -1,5 +1,8 @@
 package com.jung.planet.r2;
 
+import com.jung.planet.exception.ExternalServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +13,8 @@ import java.net.URL;
 
 @Component
 public class CloudflarePurgeCache {
+
+    private static final Logger logger = LoggerFactory.getLogger(CloudflarePurgeCache.class);
 
     private final String cloudflareXAuthEmail;
     private final String cloudflareXAuthKey;
@@ -22,18 +27,30 @@ public class CloudflarePurgeCache {
         this.purgeEndpoint = "https://api.cloudflare.com/client/v4/zones/" + zoneId + "/purge_cache";
     }
 
-    // Cloudflare 캐시 purge 메소드
+    /**
+     * Cloudflare 캐시를 purge합니다.
+     *
+     * @param imageUrl 캐시에서 제거할 이미지 URL
+     * @throws ExternalServiceException Cloudflare API 호출 실패 시
+     */
     void purgeCache(String imageUrl) {
         try {
+            logger.debug("Cloudflare 캐시 purge 시작. imageUrl: {}", imageUrl);
+
             URL url = new URL(purgeEndpoint);
             HttpURLConnection conn = getHttpURLConnection(imageUrl, url);
 
             int responseCode = conn.getResponseCode();
-            System.out.println("Response Code : " + responseCode);
+
+            if (responseCode >= 200 && responseCode < 300) {
+                logger.info("Cloudflare 캐시 purge 성공. imageUrl: {}, responseCode: {}", imageUrl, responseCode);
+            } else {
+                logger.warn("Cloudflare 캐시 purge 응답 코드 비정상. imageUrl: {}, responseCode: {}", imageUrl, responseCode);
+            }
 
         } catch (Exception e) {
-            // 예외 처리
-            throw new RuntimeException("Failed to purge Cloudflare cache", e);
+            logger.error("Cloudflare 캐시 purge 실패. imageUrl: {}", imageUrl, e);
+            throw new ExternalServiceException("Cloudflare Cache", "캐시 purge", e);
         }
     }
 

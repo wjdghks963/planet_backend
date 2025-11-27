@@ -52,15 +52,34 @@ public class Plant {
     @OneToMany(mappedBy = "reportedPlant", cascade = CascadeType.ALL)
     private Set<Report> reports;
 
-    public void setNickName(String nickName) {
+    /**
+     * 식물 정보를 업데이트합니다.
+     *
+     * @param nickName 식물 애칭
+     * @param scientificName 학명
+     * @throws IllegalArgumentException 필수 값이 null이거나 비어있는 경우
+     */
+    public void updatePlantInfo(String nickName, String scientificName) {
+        if (nickName == null || nickName.isBlank()) {
+            throw new IllegalArgumentException("식물 이름은 필수입니다.");
+        }
+        if (scientificName == null || scientificName.isBlank()) {
+            throw new IllegalArgumentException("학명은 필수입니다.");
+        }
         this.nickName = nickName;
-    }
-
-    public void setScientificName(String scientificName) {
         this.scientificName = scientificName;
     }
 
-    public void setImgUrl(String imgUrl) {
+    /**
+     * 식물 이미지 URL을 업데이트합니다.
+     *
+     * @param imgUrl 이미지 URL
+     * @throws IllegalArgumentException URL이 null이거나 비어있는 경우
+     */
+    public void updateImageUrl(String imgUrl) {
+        if (imgUrl == null || imgUrl.isBlank()) {
+            throw new IllegalArgumentException("이미지 URL은 필수입니다.");
+        }
         this.imgUrl = imgUrl;
     }
 

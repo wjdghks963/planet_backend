@@ -93,10 +93,10 @@ public class UserService {
                 .build();
 
         subscription.setUser(newUser);
-        newUser.setRole(userRole);
+        newUser.assignRole(userRole);
 
         String refreshToken = jwtTokenProvider.createRefreshToken(newUser.getId(), newUser.getEmail(), newUser.getRole());
-        newUser.setRefreshToken(refreshToken);
+        newUser.updateRefreshToken(refreshToken);
 
         userRepository.save(newUser);
         return newUser;
@@ -110,7 +110,7 @@ public class UserService {
      */
     private User updateRefreshTokenForExistingUser(User user) {
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail(), user.getRole());
-        user.setRefreshToken(refreshToken);
+        user.updateRefreshToken(refreshToken);
         userRepository.save(user);
         return user;
     }
@@ -139,8 +139,7 @@ public class UserService {
         subscription.setAiServiceAccess(subscriptionType.isAiServiceAccess());
         subscription.startSubscription();
 
-
-        user.setSubscription(subscription);
+        user.attachSubscription(subscription);
 
         userRepository.save(user);
 
@@ -158,7 +157,7 @@ public class UserService {
     public void updateRefreshToken(Long userId, String refreshToken) {
         Optional<User> user = userRepository.findById(userId);
         user.ifPresent(u -> {
-            u.setRefreshToken(refreshToken);
+            u.updateRefreshToken(refreshToken);
             userRepository.save(u);
         });
     }
@@ -194,7 +193,7 @@ public class UserService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail(), user.getRole());
 
         // 새로운 리프레시 토큰 저장
-        user.setRefreshToken(newRefreshToken);
+        user.updateRefreshToken(newRefreshToken);
         userRepository.save(user);
 
         return TokenResponseDTO.builder()
