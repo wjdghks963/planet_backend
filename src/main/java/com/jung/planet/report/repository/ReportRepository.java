@@ -20,7 +20,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             "JOIN FETCH r.reportedPlant p " +
             "JOIN FETCH p.user " +
             "WHERE r.reportedPlant IS NOT NULL")
-    List<Report> findAllPlantReportsWithUser();
+    List<Report> findPlantReportsWithUserFetchJoin();
 
     /**
      * N+1 문제 해결을 위해 fetch join을 사용하여 Diary, Plant, User를 함께 조회합니다.
@@ -30,6 +30,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             "JOIN FETCH d.plant p " +
             "JOIN FETCH p.user " +
             "WHERE r.reportedDiary IS NOT NULL")
-    List<Report> findAllDiaryReportsWithUser();
+    List<Report> findDiaryReportsWithUserFetchJoin();
 }
 

@@ -159,7 +159,7 @@ public class PlantService {
 
     @Transactional(readOnly = true)
     public List<PlantSummaryDTO> getRandomPlants() {
-        List<Plant> randomPlants = plantRepository.findRandomPlants();
+        List<Plant> randomPlants = plantRepository.findTop5ByRandom();
 
         if (randomPlants == null || randomPlants.isEmpty()) {
             return Collections.emptyList();
@@ -185,8 +185,9 @@ public class PlantService {
         return plantMapper.toDetailDto(userId, plant, isHearted);
     }
 
+    @Transactional(readOnly = true)
     public int getTotalHearts(Long userId) {
-        Integer totalHearts = plantRepository.sumHeartsByUserId(userId);
+        Integer totalHearts = plantRepository.sumHeartCountByUserId(userId);
         return totalHearts != null ? totalHearts : 0;
     }
 }

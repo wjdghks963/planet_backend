@@ -79,14 +79,14 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<ReportDTO> getAllDiaryReports() {
-        return reportRepository.findAllDiaryReportsWithUser().stream()
+        return reportRepository.findDiaryReportsWithUserFetchJoin().stream()
                 .map(this::convertToDiaryReportDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ReportDTO> getAllPlantReports() {
-        return reportRepository.findAllPlantReportsWithUser().stream()
+        return reportRepository.findPlantReportsWithUserFetchJoin().stream()
                 .map(this::convertToPlantReportDTO)
                 .collect(Collectors.toList());
     }

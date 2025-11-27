@@ -63,8 +63,8 @@ public class DiaryService {
 
         ByteBuffer imageBuffer = ByteBuffer.wrap(Base64.getDecoder().decode(diaryFormDTO.getImgData()));
 
-        diary.setContent(diaryFormDTO.getContent());
-        diary.setPublic(diaryFormDTO.getIsPublic());
+        diary.updateContent(diaryFormDTO.getContent());
+        diary.updateVisibility(diaryFormDTO.getIsPublic());
 
         cloudflareR2Uploader.editDiaryImage(customUserDetails.getUsername(), diary, imageBuffer);
 
@@ -90,15 +90,14 @@ public class DiaryService {
 
 
     private DiaryDetailDTO convertToDiaryDetailDTO(Diary diary, boolean isOwner) {
-        DiaryDetailDTO diaryDetailDTO = new DiaryDetailDTO();
-        diaryDetailDTO.setId(diary.getId());
-        diaryDetailDTO.setContent(diary.getContent());
-        diaryDetailDTO.setImgUrl(diary.getImgUrl());
-        diaryDetailDTO.setPublic(diary.getIsPublic());
-        diaryDetailDTO.setCreatedAt(diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        diaryDetailDTO.setMine(isOwner);
-
-        return diaryDetailDTO;
+        return DiaryDetailDTO.builder()
+                .id(diary.getId())
+                .content(diary.getContent())
+                .imgUrl(diary.getImgUrl())
+                .isPublic(diary.getIsPublic())
+                .createdAt(diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .isMine(isOwner)
+                .build();
     }
 
 

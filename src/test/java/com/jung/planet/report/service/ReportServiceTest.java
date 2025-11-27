@@ -189,7 +189,7 @@ class ReportServiceTest {
         List<Report> reports = Arrays.asList(diaryReport);
         DiaryDetailDTO diaryDetailDTO = new DiaryDetailDTO();
 
-        when(reportRepository.findAllDiaryReportsWithUser()).thenReturn(reports);
+        when(reportRepository.findDiaryReportsWithUserFetchJoin()).thenReturn(reports);
         when(diaryService.findDiary(anyLong(), anyLong())).thenReturn(diaryDetailDTO);
         when(userRepository.findById(2L)).thenReturn(Optional.of(reporter));
 
@@ -199,7 +199,7 @@ class ReportServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(reportRepository).findAllDiaryReportsWithUser(); // fetch join 쿼리 사용 확인
+        verify(reportRepository).findDiaryReportsWithUserFetchJoin(); // fetch join 쿼리 사용 확인
         verify(diaryService).findDiary(anyLong(), anyLong());
         verify(userRepository).findById(2L);
     }
@@ -211,7 +211,7 @@ class ReportServiceTest {
         List<Report> reports = Arrays.asList(plantReport);
         PlantDetailDTO plantDetailDTO = new PlantDetailDTO();
 
-        when(reportRepository.findAllPlantReportsWithUser()).thenReturn(reports);
+        when(reportRepository.findPlantReportsWithUserFetchJoin()).thenReturn(reports);
         when(plantService.getPlantDetailsByPlantId(anyLong(), anyLong())).thenReturn(plantDetailDTO);
         when(userRepository.findById(2L)).thenReturn(Optional.of(reporter));
 
@@ -221,7 +221,7 @@ class ReportServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(reportRepository).findAllPlantReportsWithUser(); // fetch join 쿼리 사용 확인
+        verify(reportRepository).findPlantReportsWithUserFetchJoin(); // fetch join 쿼리 사용 확인
         verify(plantService).getPlantDetailsByPlantId(anyLong(), anyLong());
         verify(userRepository).findById(2L);
     }
@@ -232,13 +232,13 @@ class ReportServiceTest {
         // Given
         List<Report> reports = Arrays.asList(diaryReport);
 
-        when(reportRepository.findAllDiaryReportsWithUser()).thenReturn(reports);
+        when(reportRepository.findDiaryReportsWithUserFetchJoin()).thenReturn(reports);
         when(userRepository.findById(2L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(EntityNotFoundException.class, () -> reportService.getAllDiaryReports());
 
-        verify(reportRepository).findAllDiaryReportsWithUser();
+        verify(reportRepository).findDiaryReportsWithUserFetchJoin();
         verify(userRepository).findById(2L);
     }
 
@@ -248,13 +248,13 @@ class ReportServiceTest {
         // Given
         List<Report> reports = Arrays.asList(plantReport);
 
-        when(reportRepository.findAllPlantReportsWithUser()).thenReturn(reports);
+        when(reportRepository.findPlantReportsWithUserFetchJoin()).thenReturn(reports);
         when(userRepository.findById(2L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(EntityNotFoundException.class, () -> reportService.getAllPlantReports());
 
-        verify(reportRepository).findAllPlantReportsWithUser();
+        verify(reportRepository).findPlantReportsWithUserFetchJoin();
         verify(userRepository).findById(2L);
     }
 }

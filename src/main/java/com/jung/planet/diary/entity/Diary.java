@@ -52,16 +52,33 @@ public class Diary {
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now(); // 조건부 설정
     }
 
-
-    public void setPublic(Boolean aPublic) {
-        isPublic = aPublic;
-    }
-
-    public void setImgUrl(String imgUrl) {
-        this.imgUrl = imgUrl;
-    }
-
-    public void setContent(String content) {
+    /**
+     * 다이어리 내용을 수정합니다.
+     */
+    public void updateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("다이어리 내용은 필수입니다.");
+        }
         this.content = content;
+    }
+
+    /**
+     * 다이어리 공개 여부를 변경합니다.
+     */
+    public void updateVisibility(Boolean isPublic) {
+        if (isPublic == null) {
+            throw new IllegalArgumentException("공개 여부는 null일 수 없습니다.");
+        }
+        this.isPublic = isPublic;
+    }
+
+    /**
+     * 다이어리 이미지 URL을 수정합니다.
+     */
+    public void updateImageUrl(String imgUrl) {
+        if (imgUrl == null || imgUrl.isBlank()) {
+            throw new IllegalArgumentException("이미지 URL은 필수입니다.");
+        }
+        this.imgUrl = imgUrl;
     }
 }

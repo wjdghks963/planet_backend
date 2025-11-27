@@ -160,6 +160,7 @@ public class UserService {
         });
     }
 
+    @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -212,7 +213,7 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("해당하는 유저를 찾을 수 없습니다."));
 
         int totalHeartsGivenByUser = userPlantHeartRepository.countByUserId(userId);
-        Integer totalHearts = plantRepository.sumHeartsByUserId(userId);
+        Integer totalHearts = plantRepository.sumHeartCountByUserId(userId);
         int receivedHearts = totalHearts != null ? totalHearts : 0;
 
         long daysSinceCreated = ChronoUnit.DAYS.between(user.getCreatedAt(), LocalDateTime.now());
