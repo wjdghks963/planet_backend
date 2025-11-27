@@ -1,6 +1,7 @@
 package com.jung.planet.plant.controller;
 
 import com.jung.planet.common.dto.ApiResponseDTO;
+import com.jung.planet.common.service.AuthorizationService;
 import com.jung.planet.exception.ErrorMessages;
 import com.jung.planet.exception.PermissionDeniedException;
 import com.jung.planet.exception.UnauthorizedActionException;
@@ -38,6 +39,7 @@ public class PlantController {
     private static final Logger logger = LoggerFactory.getLogger(PlantController.class);
 
     private final PlantService plantService;
+    private final AuthorizationService authorizationService;
 
     @Operation(summary = "식물 목록 조회", description = "모든 식물의 목록을 조회합니다.")
     @ApiResponses({
@@ -125,7 +127,7 @@ public class PlantController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류",
             content = @Content(schema = @Schema(implementation = ApiResponseDTO.class)))
     })
-    @PostMapping("/edit/{id}")
+    @PutMapping("/{id}")
     public ApiResponseDTO<PlantResponseDTO> editPlant(
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -135,21 +137,16 @@ public class PlantController {
             @PathVariable("id") Long plantId) {
         Long userId = customUserDetails.getUserId();
         logger.debug("userId :: {}", userId);
-        
+
         // 식물 소유권 확인
-        if (!plantService.isOwnerOfPlant(userId, plantId)) {
+        if (!authorizationService.isOwnerOfPlant(userId, plantId)) {
             throw new PermissionDeniedException("Plant", plantId);
         }
 
-        try {
-            plantFormDTO.setUserId(userId);
-            Plant newPlant = plantService.editPlant(plantFormDTO, plantId);
-            logger.info("Plant edited: {}", newPlant);
-            return ApiResponseDTO.success(PlantResponseDTO.forSinglePlant(newPlant.getId()), "식물이 성공적으로 수정되었습니다.");
-        } catch (Exception e) {
-            logger.error("Error editing plant: {}", e.getMessage());
-            return ApiResponseDTO.<PlantResponseDTO>error(ErrorMessages.SERVER_ERROR, PlantResponseDTO.builder().success(false).build());
-        }
+        plantFormDTO.setUserId(userId);
+        Plant newPlant = plantService.editPlant(plantFormDTO, plantId);
+        logger.info("Plant edited: {}", newPlant);
+        return ApiResponseDTO.success(PlantResponseDTO.forSinglePlant(newPlant.getId()), "식물이 성공적으로 수정되었습니다.");
     }
 
     @Operation(summary = "식물 삭제", description = "ID로 특정 식물을 삭제합니다.")
@@ -174,7 +171,7 @@ public class PlantController {
         Long userId = customUserDetails.getUserId();
         String userEmail = customUserDetails.getUsername();
 
-        if (!plantService.isOwnerOfPlant(userId, plantId) && !customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
+        if (!authorizationService.isOwnerOfPlant(userId, plantId) && !customUserDetails.getUserRole().equals(UserRole.ADMIN)) {
             throw new UnauthorizedActionException(ErrorMessages.PLANT_PERMISSION_DENIED);
         }
 

@@ -3,7 +3,6 @@ package com.jung.planet.security.UserDetail;
 
 import com.jung.planet.user.entity.UserRole;
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -11,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Getter
-@Setter
 public class CustomUserDetails implements UserDetails {
 
     private final Long userId;
@@ -19,7 +17,7 @@ public class CustomUserDetails implements UserDetails {
     private final UserRole userRole;
     private final String password = "";
 
-    private Collection<? extends GrantedAuthority> authorities;
+    private final Collection<? extends GrantedAuthority> authorities;
 
 
     public CustomUserDetails(Long userId, String username, UserRole userRole, Collection<? extends GrantedAuthority> authorities) {

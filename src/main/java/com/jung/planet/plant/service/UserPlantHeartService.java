@@ -1,6 +1,7 @@
 package com.jung.planet.plant.service;
 
 
+import com.jung.planet.common.service.AuthorizationService;
 import com.jung.planet.exception.UnauthorizedActionException;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.plant.entity.UserPlantHeart;
@@ -23,6 +24,7 @@ public class UserPlantHeartService {
     private final UserPlantHeartRepository userPlantHeartRepository;
     private final UserRepository userRepository;
     private final PlantRepository plantRepository;
+    private final AuthorizationService authorizationService;
 
 
     @Transactional
@@ -33,7 +35,7 @@ public class UserPlantHeartService {
                 .orElseThrow(() -> new EntityNotFoundException("Plant not found"));
 
         // 식물의 소유자가 아닌 경우에만 토글 허용
-        if (!isOwnerOfPlant(userId, plantId)) {
+        if (!authorizationService.isOwnerOfPlant(userId, plantId)) {
 
             UserPlantHeartId userPlantHeartId = new UserPlantHeartId(userId, plantId);
             Optional<UserPlantHeart> userPlantHeart = userPlantHeartRepository.findById(userPlantHeartId);
@@ -56,14 +58,5 @@ public class UserPlantHeartService {
             // 식물의 소유자인 경우, 토글을 거부하고 예외 처리 또는 적절한 응답 반환
             throw new UnauthorizedActionException("자신의 식물엔 좋아요를 누를 수 없습니다.");
         }
-
-
     }
-
-
-    public boolean isOwnerOfPlant(Long userId, Long plantId) {
-        return plantRepository.existsByIdAndUserId(plantId, userId);
-    }
-
-
 }

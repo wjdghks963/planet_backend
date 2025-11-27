@@ -8,7 +8,7 @@ import lombok.Setter;
 
 
 @Getter
-@Setter
+@Builder
 public class DiaryDTO {
 
     @NotNull(message = "plant를 찾을 수 없습니다.")

@@ -1,6 +1,7 @@
 package com.jung.planet.r2;
 
 import com.jung.planet.diary.entity.Diary;
+import com.jung.planet.exception.ExternalServiceException;
 import com.jung.planet.plant.entity.Plant;
 import com.jung.planet.user.entity.User;
 import lombok.Getter;
@@ -27,8 +28,8 @@ public class CloudflareR2Uploader {
     private static final Logger logger = LoggerFactory.getLogger(CloudflareR2Uploader.class);
 
 
-    private final CloudFlareR2Utils cloudFlareR2Utils;
-    private final CloudFlarePurgeCache cloudFlarePurgeCache;
+    private final CloudflareR2Utils cloudflareR2Utils;
+    private final CloudflarePurgeCache cloudflarePurgeCache;
 
     private final S3Client s3Client;
 
@@ -38,12 +39,19 @@ public class CloudflareR2Uploader {
 
 
     @Autowired
-    public CloudflareR2Uploader(CloudFlarePurgeCache cloudFlarePurgeCache, @Value("${cloudflareR2.access_id}") String access_id, @Value("${cloudflareR2.secret_key}") String secret_key, @Value("${cloudflareR2.end_point}") String end_point, @Value("${cloudflareR2.storage_point}") String storage_point, @Value("${cloudflareR2.bucket_name}") String bucket_name) {
-        this.cloudFlareR2Utils = new CloudFlareR2Utils();
+    public CloudflareR2Uploader(
+            CloudflareR2Utils cloudflareR2Utils,
+            CloudflarePurgeCache cloudflarePurgeCache,
+            @Value("${cloudflareR2.access_id}") String access_id,
+            @Value("${cloudflareR2.secret_key}") String secret_key,
+            @Value("${cloudflareR2.end_point}") String end_point,
+            @Value("${cloudflareR2.storage_point}") String storage_point,
+            @Value("${cloudflareR2.bucket_name}") String bucket_name) {
+        this.cloudflareR2Utils = cloudflareR2Utils;
         this.bucketName = bucket_name;
         this.endPointUri = end_point;
         this.storagePointUri = storage_point;
-        this.cloudFlarePurgeCache = cloudFlarePurgeCache;
+        this.cloudflarePurgeCache = cloudflarePurgeCache;
 
 
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(access_id, secret_key);
@@ -56,7 +64,7 @@ public class CloudflareR2Uploader {
     }
 
     public void uploadPlantImage(User user, Plant plant, ByteBuffer imageBuffer) {
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String imageType = "thumbnail";
         String filePath = user.getEmail() + "/" + plant.getId()
@@ -75,7 +83,7 @@ public class CloudflareR2Uploader {
         String fileName = storagePointUri + filePath;
 
 
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String existingImageHash = retrieveImageHashFromR2(filePath);
 
@@ -85,7 +93,7 @@ public class CloudflareR2Uploader {
 
             // 이미지 다르면 캐시 삭제
             uploadPlantImage(user, plant, imageBuffer);
-            cloudFlarePurgeCache.purgeCache(fileName);
+            cloudflarePurgeCache.purgeCache(fileName);
 
         }
     }
@@ -112,15 +120,15 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete plant files. plantId: {}, userEmail: {}", plantId, userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "식물 파일 삭제", e);
         }
     }
 
 
     // Diary
     public void uploadDiaryImage(String userEmail, Diary diary, ByteBuffer imageBuffer) {
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
         Plant plant = diary.getPlant();
 
         String imageType = "diary";
@@ -146,7 +154,7 @@ public class CloudflareR2Uploader {
         String fileName = storagePointUri + filePath;
 
 
-        String imageHash = cloudFlareR2Utils.calculateImageHash(imageBuffer);
+        String imageHash = cloudflareR2Utils.calculateImageHash(imageBuffer);
 
         String existingImageHash = retrieveImageHashFromR2(filePath);
 
@@ -154,7 +162,7 @@ public class CloudflareR2Uploader {
         if (!imageHash.equals(existingImageHash)) {
             // 이미지 다르면 캐시 삭제
             uploadDiaryImage(userEmail, diary, imageBuffer);
-            cloudFlarePurgeCache.purgeCache(fileName);
+            cloudflarePurgeCache.purgeCache(fileName);
 
         }
     }
@@ -177,8 +185,8 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete diary file. diaryId: {}, userEmail: {}", diary.getId(), userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "일기 파일 삭제", e);
         }
     }
 
@@ -204,8 +212,8 @@ public class CloudflareR2Uploader {
 
 
         } catch (S3Exception e) {
-            // 로그 기록, 예외 처리 로직
-            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+            logger.error("Failed to delete user files. userEmail: {}", userEmail, e);
+            throw new ExternalServiceException("Cloudflare R2", "사용자 파일 삭제", e);
         }
     }
 
@@ -231,7 +239,8 @@ public class CloudflareR2Uploader {
 
             return response.metadata().get("image-hash");
         } catch (S3Exception e) {
-            throw new RuntimeException("Failed to retrieve image hash from R2", e);
+            logger.error("Failed to retrieve image hash from R2. filePath: {}", filePath, e);
+            throw new ExternalServiceException("Cloudflare R2", "이미지 해시 조회", e);
         }
     }
 }

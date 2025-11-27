@@ -58,57 +58,46 @@ public class DiaryService {
 
     @Transactional
     public void editDiary(CustomUserDetails customUserDetails, Long diaryId, DiaryFormDTO diaryFormDTO) {
-        if (diaryRepository.existsById(diaryId)) {
-            Optional<Diary> diary = diaryRepository.findByIdAndUserId(diaryId, customUserDetails.getUserId());
+        Diary diary = diaryRepository.findByIdAndUserId(diaryId, customUserDetails.getUserId())
+                .orElseThrow(() -> new AccessDeniedException("다이어리를 찾을 수 없거나 수정 권한이 없습니다. diaryId: " + diaryId));
 
-            if (diary.isPresent()) {
-                ByteBuffer imageBuffer = ByteBuffer.wrap(Base64.getDecoder().decode(diaryFormDTO.getImgData()));
+        ByteBuffer imageBuffer = ByteBuffer.wrap(Base64.getDecoder().decode(diaryFormDTO.getImgData()));
 
-                diary.get().setContent(diaryFormDTO.getContent());
-                diary.get().setPublic(diaryFormDTO.getIsPublic());
+        diary.updateContent(diaryFormDTO.getContent());
+        diary.updateVisibility(diaryFormDTO.getIsPublic());
 
-                cloudflareR2Uploader.editDiaryImage(customUserDetails.getUsername(), diary.get(), imageBuffer);
+        cloudflareR2Uploader.editDiaryImage(customUserDetails.getUsername(), diary, imageBuffer);
 
-                diaryRepository.save(diary.get());
-
-            } else {
-                // 소유자가 아닌 경우 예외 발생
-                throw new AccessDeniedException("No access rights to delete diary with ID " + diaryId);
-            }
-        } else {
-            throw new EntityNotFoundException("다이어리 데이터를 찾을 수 없습니다.");
-        }
+        diaryRepository.save(diary);
     }
 
     @Transactional
     public void deleteDiary(Long diaryId, CustomUserDetails customUserDetails) {
-        Optional<Diary> diary = diaryRepository.findById(diaryId);
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new EntityNotFoundException("다이어리 데이터를 찾을 수 없습니다."));
 
-        if (diary.isPresent()) {
-            // 어드민이거나 일기의 소유자일 경우 삭제 허용
-            if (customUserDetails.getUserRole().equals(UserRole.ADMIN) || diary.get().getPlant().getUser().getId().equals(customUserDetails.getUserId())) {
-                diaryRepository.deleteById(diaryId);
-                cloudflareR2Uploader.deleteDiary(diary.get(), customUserDetails.getUsername());
-            } else {
-                // 소유자가 아닌 경우 예외 발생
-                throw new AccessDeniedException("No access rights to delete diary with ID " + diaryId);
-            }
-        } else {
-            throw new EntityNotFoundException("다이어리 데이터를 찾을 수 없습니다.");
+        // 어드민이거나 일기의 소유자일 경우 삭제 허용
+        boolean isAdmin = customUserDetails.getUserRole().equals(UserRole.ADMIN);
+        boolean isOwner = diary.getPlant().getUser().getId().equals(customUserDetails.getUserId());
+
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException("다이어리 삭제 권한이 없습니다. diaryId: " + diaryId);
         }
+
+        diaryRepository.deleteById(diaryId);
+        cloudflareR2Uploader.deleteDiary(diary, customUserDetails.getUsername());
     }
 
 
     private DiaryDetailDTO convertToDiaryDetailDTO(Diary diary, boolean isOwner) {
-        DiaryDetailDTO diaryDetailDTO = new DiaryDetailDTO();
-        diaryDetailDTO.setId(diary.getId());
-        diaryDetailDTO.setContent(diary.getContent());
-        diaryDetailDTO.setImgUrl(diary.getImgUrl());
-        diaryDetailDTO.setPublic(diary.getIsPublic());
-        diaryDetailDTO.setCreatedAt(diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        diaryDetailDTO.setMine(isOwner);
-
-        return diaryDetailDTO;
+        return DiaryDetailDTO.builder()
+                .id(diary.getId())
+                .content(diary.getContent())
+                .imgUrl(diary.getImgUrl())
+                .isPublic(diary.getIsPublic())
+                .createdAt(diary.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .isMine(isOwner)
+                .build();
     }
 
 

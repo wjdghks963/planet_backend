@@ -5,12 +5,10 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "subscription")
@@ -39,6 +37,28 @@ public class Subscription {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
+
+    /**
+     * User와의 양방향 관계를 설정합니다.
+     */
+    public void assignUser(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("사용자는 null일 수 없습니다.");
+        }
+        this.user = user;
+    }
+
+    /**
+     * 구독 타입을 업그레이드합니다.
+     */
+    public void upgradeToType(SubscriptionType newType) {
+        if (newType == null) {
+            throw new IllegalArgumentException("구독 타입은 null일 수 없습니다.");
+        }
+        this.type = newType;
+        this.maxPlants = newType.getMaxPlants();
+        this.aiServiceAccess = newType.isAiServiceAccess();
+    }
 
     // 구독 시작
     public void startSubscription() {

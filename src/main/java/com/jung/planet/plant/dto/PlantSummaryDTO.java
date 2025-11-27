@@ -5,7 +5,7 @@ import lombok.Setter;
 
 
 
-@Setter
+@Builder
 @Getter
 public class PlantSummaryDTO {
     private Long id;

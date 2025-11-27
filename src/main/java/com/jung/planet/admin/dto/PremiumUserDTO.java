@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 
-@Setter
+@Builder
 @Getter
 public class PremiumUserDTO {
     private String email;

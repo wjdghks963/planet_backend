@@ -30,11 +30,15 @@ public class JwtTokenProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
     private final Key key;
+    private final long validityInMilliseconds;
+    private final long refreshTokenValidityInMilliseconds;
 
-    private final long validityInMilliseconds = 1000 * 60 * 60 * 12; // 12h
-    private final long refreshTokenValidityInMilliseconds = 1000 * 60 * 60 * 24 * 7; // 1 week
-
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.access-token-validity}") long accessTokenValidity,
+            @Value("${jwt.refresh-token-validity}") long refreshTokenValidity) {
+        this.validityInMilliseconds = accessTokenValidity;
+        this.refreshTokenValidityInMilliseconds = refreshTokenValidity;
         try {
             byte[] keyBytes = Decoders.BASE64.decode(secretKey);
             this.key = Keys.hmacShaKeyFor(keyBytes);

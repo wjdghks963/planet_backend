@@ -3,14 +3,16 @@ package com.jung.planet.report.entity;
 import com.jung.planet.diary.entity.Diary;
 import com.jung.planet.plant.entity.Plant;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "report")
 public class Report {
     @Id
